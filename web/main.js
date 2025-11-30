@@ -478,6 +478,13 @@ class TodoManager {
         const container = document.querySelector('.sticker-container');
         if (container) {
             container.style.opacity = value / 100;
+            
+            // 매우 낮은 투명도일 때 배경 효과 제거
+            if (value <= 5) {
+                container.setAttribute('data-very-low-opacity', 'true');
+            } else {
+                container.removeAttribute('data-very-low-opacity');
+            }
         }
         
         if (save) {

@@ -125,6 +125,15 @@ body {
     position: relative;
 }
 
+/* 완전 투명도일 때 배경/효과 숨김 */
+.sticker-container[data-very-low-opacity="true"] {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+    border: none;
+}
+
 @keyframes window-appear {
     from {
         opacity: 0;
