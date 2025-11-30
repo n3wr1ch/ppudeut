@@ -2,6 +2,23 @@
  * Todo Sticker - 게이미피케이션 할 일 관리 앱
  */
 
+import { 
+    validateAndSanitizeInput, 
+    escapeHtml,
+    safeLocalStorageSet,
+    safeLocalStorageGet,
+    logError,
+    showUserMessage 
+} from './security-utils.js';
+
+import {
+    debounce,
+    throttle,
+    rafThrottle,
+    delegateEvent,
+    BatchUpdateQueue
+} from './performance-utils.js';
+
 // ===== 상수 정의 =====
 const EMOJIS = ['📝', '🎯', '💪', '🔥', '⭐', '💡', '📚', '🎨', '🏃', '🍎', '☕', '🎵', '🌟', '💎', '🚀', '🌈'];
 
@@ -193,6 +210,18 @@ class TodoManager {
         this.sound = new SoundManager();
         this.confetti = null;
         
+        // 성능 최적화: 렌더링 최적화
+        this.lastTodosSnapshot = [];
+        this.renderThrottled = rafThrottle(() => this.render());
+        
+        // 배치 업데이트 큐
+        this.updateQueue = new BatchUpdateQueue((items) => {
+            this.render();
+        });
+        
+        // 이벤트 리스너 정리 함수들
+        this.eventCleanupFunctions = [];
+        
         this.init();
     }
 
@@ -248,58 +277,97 @@ class TodoManager {
 
     loadProfile() {
         try {
-            const saved = localStorage.getItem('todo-profile');
-            return saved ? { ...this.getDefaultProfile(), ...JSON.parse(saved) } : this.getDefaultProfile();
-        } catch {
+            const saved = safeLocalStorageGet('todo-profile', null, false);
+            return saved ? { ...this.getDefaultProfile(), ...saved } : this.getDefaultProfile();
+        } catch (error) {
+            logError('loadProfile', error);
             return this.getDefaultProfile();
         }
     }
 
     saveProfile() {
-        try {
-            localStorage.setItem('todo-profile', JSON.stringify(this.profile));
-        } catch { /* ignore */ }
+        const success = safeLocalStorageSet('todo-profile', this.profile, false);
+        if (!success) {
+            logError('saveProfile', new Error('프로필 저장 실패'));
+            showUserMessage('프로필 저장에 실패했습니다.', 'error');
+        }
     }
 
     loadSettings() {
         try {
-            const saved = localStorage.getItem('todo-settings');
-            return saved ? { ...this.getDefaultSettings(), ...JSON.parse(saved) } : this.getDefaultSettings();
-        } catch {
+            const saved = safeLocalStorageGet('todo-settings', null, false);
+            return saved ? { ...this.getDefaultSettings(), ...saved } : this.getDefaultSettings();
+        } catch (error) {
+            logError('loadSettings', error);
             return this.getDefaultSettings();
         }
     }
 
     saveSettings() {
-        try {
-            localStorage.setItem('todo-settings', JSON.stringify(this.settings));
-        } catch { /* ignore */ }
+        const success = safeLocalStorageSet('todo-settings', this.settings, false);
+        if (!success) {
+            logError('saveSettings', new Error('설정 저장 실패'));
+        }
     }
 
     loadTodos() {
         try {
-            const saved = localStorage.getItem('todos');
-            return saved ? JSON.parse(saved) : [];
-        } catch {
+            const saved = safeLocalStorageGet('todos', null, false);
+            return saved || [];
+        } catch (error) {
+            logError('loadTodos', error);
             return [];
         }
     }
 
     saveTodos() {
-        try {
-            localStorage.setItem('todos', JSON.stringify(this.todos));
-        } catch { /* ignore */ }
+        const success = safeLocalStorageSet('todos', this.todos, false);
+        if (!success) {
+            logError('saveTodos', new Error('할 일 목록 저장 실패'));
+            showUserMessage('할 일 목록 저장에 실패했습니다.', 'error');
+        }
     }
 
     migrateData() {
-        // 기존 할 일에 새 필드 추가
-        this.todos = this.todos.map(todo => ({
-            ...todo,
-            emoji: todo.emoji || null,
-            createdAt: todo.createdAt || new Date().toISOString(),
-            pinned: todo.pinned || false,
-        }));
-        this.saveTodos();
+        try {
+            // 기존 할 일에 새 필드 추가 및 데이터 검증
+            this.todos = this.todos.map(todo => {
+                // 필수 필드 검증
+                if (!todo || typeof todo !== 'object') {
+                    logError('migrateData', new Error('잘못된 todo 객체'), { todo });
+                    return null;
+                }
+
+                // ID가 없으면 새로 생성
+                if (!todo.id) {
+                    todo.id = Date.now() + Math.random();
+                }
+
+                // 텍스트가 없으면 기본값
+                if (!todo.text || typeof todo.text !== 'string') {
+                    todo.text = '(텍스트 없음)';
+                }
+
+                // 텍스트 새니타이징
+                const validation = validateAndSanitizeInput(todo.text, { 
+                    maxLength: 200 
+                });
+                
+                return {
+                    ...todo,
+                    text: validation.valid ? validation.sanitized : todo.text,
+                    emoji: todo.emoji || null,
+                    createdAt: todo.createdAt || new Date().toISOString(),
+                    pinned: todo.pinned || false,
+                    completed: Boolean(todo.completed),
+                };
+            }).filter(todo => todo !== null); // null 제거
+
+            this.saveTodos();
+        } catch (error) {
+            logError('migrateData', error);
+            showUserMessage('데이터 마이그레이션 중 오류가 발생했습니다.', 'warning');
+        }
     }
 
     // ===== 이벤트 바인딩 =====
@@ -566,12 +634,22 @@ class TodoManager {
 
     // ===== 할 일 관리 =====
     addTodo(text) {
-        const t = (text || '').trim();
-        if (!t || t.length > 200) return;
+        // 입력 검증 및 새니타이징
+        const validation = validateAndSanitizeInput(text, { 
+            maxLength: 200, 
+            minLength: 1 
+        });
+
+        if (!validation.valid) {
+            if (validation.error) {
+                showUserMessage(validation.error, 'warning');
+            }
+            return;
+        }
 
         const todo = {
             id: Date.now(),
-            text: t,
+            text: validation.sanitized,
             completed: false,
             createdAt: new Date().toISOString(),
             emoji: this.selectedEmoji,
@@ -997,12 +1075,23 @@ class TodoManager {
             textEl.classList.remove('editing');
             
             const newText = textEl.textContent.trim();
-            if (newText && newText !== todo.text && newText.length <= 200) {
-                todo.text = newText;
+            
+            // 입력 검증
+            const validation = validateAndSanitizeInput(newText, { 
+                maxLength: 200, 
+                minLength: 1 
+            });
+
+            if (validation.valid && validation.sanitized !== todo.text) {
+                todo.text = validation.sanitized;
                 this.saveTodos();
             } else {
                 // 원래 텍스트로 복원
                 textEl.textContent = todo.emoji ? todo.emoji + ' ' + todo.text : todo.text;
+                
+                if (!validation.valid && validation.error) {
+                    showUserMessage(validation.error, 'warning');
+                }
             }
         };
 
