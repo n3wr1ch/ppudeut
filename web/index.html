@@ -29,19 +29,19 @@
         </div>
 
         <!-- 프로필 바 -->
-        <div class="profile-bar">
+        <div class="profile-bar" role="region" aria-label="프로필 정보">
             <div class="profile-left">
-                <div class="level-badge" id="levelBadge">Lv.1</div>
+                <div class="level-badge" id="levelBadge" role="status" aria-label="현재 레벨">Lv.1</div>
                 <div class="xp-container">
-                    <div class="xp-bar">
+                    <div class="xp-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="경험치 진행률">
                         <div class="xp-fill" id="xpFill" style="width: 0%"></div>
                     </div>
-                    <span class="xp-text" id="xpText">0 / 100 XP</span>
+                    <span class="xp-text" id="xpText" aria-live="polite">0 / 100 XP</span>
                 </div>
             </div>
             <div class="profile-right">
-                <div class="streak-badge" id="streakBadge" title="연속 달성">
-                    <span class="streak-icon">🔥</span>
+                <div class="streak-badge" id="streakBadge" title="연속 달성" role="status" aria-label="연속 달성 일수">
+                    <span class="streak-icon" aria-hidden="true">🔥</span>
                     <span class="streak-count" id="streakCount">0</span>
                 </div>
             </div>
@@ -58,13 +58,21 @@
                     class="todo-input" 
                     autocomplete="off"
                     aria-label="새 할 일 입력"
+                    maxlength="200"
                 >
-                <button class="emoji-picker-btn" id="emojiPickerBtn" title="이모지 선택">😊</button>
+                <button 
+                    class="emoji-picker-btn" 
+                    id="emojiPickerBtn" 
+                    title="이모지 선택" 
+                    aria-label="이모지 선택"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                >😊</button>
             </div>
 
             <!-- 이모지 피커 -->
-            <div class="emoji-picker" id="emojiPicker" style="display: none;">
-                <div class="emoji-grid" id="emojiGrid"></div>
+            <div class="emoji-picker" id="emojiPicker" style="display: none;" role="dialog" aria-label="이모지 선택기">
+                <div class="emoji-grid" id="emojiGrid" role="group" aria-label="이모지 목록"></div>
             </div>
 
             <!-- 할 일 목록 -->
@@ -73,8 +81,8 @@
             </ul>
 
             <!-- 빈 상태 -->
-            <div id="emptyState" class="empty-state" style="display: none;">
-                <div class="empty-icon">✨</div>
+            <div id="emptyState" class="empty-state" style="display: none;" role="status" aria-live="polite">
+                <div class="empty-icon" aria-hidden="true">✨</div>
                 <div class="empty-text" id="emptyText">할 일이 없습니다</div>
                 <div class="empty-hint" id="emptyHint">위 입력창에 새 할 일을 추가해보세요</div>
             </div>
@@ -166,6 +174,9 @@
                 <div class="settings-section">
                     <label class="settings-label">데이터 관리</label>
                     <div class="data-actions">
+                        <button class="primary-btn" id="exportBackupBtn" title="백업 파일 내보내기">💾 백업 내보내기</button>
+                        <button class="primary-btn" id="importBackupBtn" title="백업 파일 가져오기">📥 백업 가져오기</button>
+                        <input type="file" id="importBackupFile" accept=".json" style="display: none;">
                         <button class="danger-btn" id="resetDataBtn">모든 데이터 초기화</button>
                     </div>
                 </div>

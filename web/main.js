@@ -40,6 +40,16 @@ import {
     togglePinById,
 } from './todo-core.js';
 
+import {
+    KeyboardShortcutManager,
+    AccessibilityHelper,
+} from './accessibility.js';
+
+import {
+    BackupManager,
+    SearchFilterManager,
+} from './backup-utils.js';
+
 import './types.js';
 
 // ===== 상수 정의 =====
@@ -245,6 +255,15 @@ class TodoManager {
         // 이벤트 리스너 정리 함수들
         this.eventCleanupFunctions = [];
         
+        // 키보드 단축키 매니저
+        this.shortcuts = new KeyboardShortcutManager();
+        
+        // 백업 매니저
+        this.backupManager = new BackupManager();
+        
+        // 검색/필터 매니저
+        this.searchFilter = new SearchFilterManager();
+        
         this.init();
     }
 
@@ -262,10 +281,78 @@ class TodoManager {
         this.applyTheme();
         this.applyWindowSettings();
         this.bindEvents();
+        this.setupKeyboardShortcuts();
+        this.setupAutoBackup();
         this.updateStreak();
         this.render();
         this.renderProfile();
         this.checkAchievements(true); // 초기 체크 (조용히)
+    }
+
+    // ===== 자동 백업 설정 =====
+    setupAutoBackup() {
+        // 7일마다 자동 백업
+        this.backupManager.setupAutoBackup(7);
+    }
+
+    // ===== 키보드 단축키 설정 =====
+    setupKeyboardShortcuts() {
+        // 새 할 일 추가 (Ctrl+N)
+        this.shortcuts.register('ctrl+n', () => {
+            const input = document.getElementById('todoInput');
+            input?.focus();
+        }, '새 할 일 입력');
+
+        // 설정 열기 (Ctrl+,)
+        this.shortcuts.register('ctrl+,', () => {
+            const settingsPanel = document.getElementById('settingsPanel');
+            if (settingsPanel) {
+                settingsPanel.style.display = 'flex';
+                this.renderSettings();
+            }
+        }, '설정 열기');
+
+        // 완료된 항목 삭제 (Ctrl+Shift+D)
+        this.shortcuts.register('ctrl+shift+d', () => {
+            const completedCount = getCompletedCount(this.todos);
+            if (completedCount > 0) {
+                this.todos = clearCompleted(this.todos);
+                this.saveTodos();
+                this.render();
+                this.sound.play('click');
+                AccessibilityHelper.announce(`${completedCount}개의 완료된 할 일이 삭제되었습니다.`);
+            }
+        }, '완료된 항목 삭제');
+
+        // 미니멀 모드 토글 (Ctrl+M)
+        this.shortcuts.register('ctrl+m', () => {
+            this.toggleMinimalMode();
+        }, '미니멀 모드 전환');
+
+        // 도움말 표시 (F1 또는 ?)
+        this.shortcuts.register('f1', () => {
+            this.showKeyboardHelp();
+        }, '도움말 표시');
+
+        this.shortcuts.register('shift+/', () => {
+            this.showKeyboardHelp();
+        }, '도움말 표시');
+
+        // 단축키 활성화
+        this.shortcuts.enable();
+    }
+
+    // 키보드 단축키 도움말 표시
+    showKeyboardHelp() {
+        const shortcuts = this.shortcuts.getShortcuts();
+        const helpText = shortcuts
+            .map(s => `${s.key}: ${s.description}`)
+            .join('\n');
+        
+        showToast('키보드 단축키 도움말을 콘솔에서 확인하세요.', { type: 'info' });
+        console.log('=== 키보드 단축키 ===\n' + helpText);
+        
+        AccessibilityHelper.announce('키보드 단축키 목록이 콘솔에 표시되었습니다.');
     }
 
     // ===== 데이터 관리 =====
@@ -479,6 +566,38 @@ class TodoManager {
             if (confirm('모든 데이터를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
                 localStorage.clear();
                 location.reload();
+            }
+        });
+
+        // 백업 내보내기
+        const exportBackupBtn = document.getElementById('exportBackupBtn');
+        exportBackupBtn?.addEventListener('click', () => {
+            this.backupManager.exportToFile();
+        });
+
+        // 백업 가져오기
+        const importBackupBtn = document.getElementById('importBackupBtn');
+        const importBackupFile = document.getElementById('importBackupFile');
+        
+        importBackupBtn?.addEventListener('click', () => {
+            importBackupFile?.click();
+        });
+
+        importBackupFile?.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                const backup = await this.backupManager.importFromFile(file);
+                
+                if (confirm('백업을 복원하시겠습니까? 현재 데이터는 덮어씌워집니다.')) {
+                    this.backupManager.restore(backup);
+                }
+            } catch (error) {
+                showUserMessage(error.message, 'error');
+            } finally {
+                // 파일 입력 초기화
+                importBackupFile.value = '';
             }
         });
 
