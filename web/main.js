@@ -19,6 +19,29 @@ import {
     BatchUpdateQueue
 } from './performance-utils.js';
 
+import {
+    ModalManager,
+    showToast,
+    AnimationUtils,
+    DOMUtils
+} from './ui-utils.js';
+
+import {
+    toggleTodoById,
+    deleteTodoById,
+    clearCompleted,
+    sortTodos,
+    getActiveCount,
+    getCompletedCount,
+    getTodoAgeHours,
+    getTodoAgeText,
+    calculateXP,
+    updateTodoText,
+    togglePinById,
+} from './todo-core.js';
+
+import './types.js';
+
 // ===== 상수 정의 =====
 const EMOJIS = ['📝', '🎯', '💪', '🔥', '⭐', '💡', '📚', '🎨', '🏃', '🍎', '☕', '🎵', '🌟', '💎', '🚀', '🌈'];
 
@@ -403,7 +426,8 @@ class TodoManager {
 
         // 완료 삭제
         clearCompletedBtn?.addEventListener('click', () => {
-            this.todos = this.todos.filter(t => !t.completed);
+            // todo-core 함수 사용
+            this.todos = clearCompleted(this.todos);
             this.saveTodos();
             this.render();
             this.sound.play('click');
@@ -672,10 +696,12 @@ class TodoManager {
         if (!todo) return;
 
         const wasCompleted = todo.completed;
-        todo.completed = !todo.completed;
+        
+        // todo-core 함수 사용
+        this.todos = toggleTodoById(this.todos, id);
         this.saveTodos();
 
-        if (!wasCompleted && todo.completed) {
+        if (!wasCompleted && !todo.completed) {
             // 완료 시 XP 및 스트릭 처리
             this.onTodoComplete(todo);
         }
@@ -684,11 +710,8 @@ class TodoManager {
     }
 
     onTodoComplete(todo) {
-        // XP 계산 (할 일 나이에 따라 보너스)
-        const ageHours = this.getAgeHours(todo.createdAt);
-        let xpGain = 10;
-        if (ageHours < 1) xpGain = 15; // 빠른 완료 보너스
-        else if (ageHours > 48) xpGain = 5; // 오래된 할 일 감소
+        // todo-core의 calculateXP 사용
+        const xpGain = calculateXP(todo.createdAt);
 
         this.addXP(xpGain, todo.id);
         
@@ -729,7 +752,8 @@ class TodoManager {
     }
 
     deleteTodo(id) {
-        this.todos = this.todos.filter(t => t.id !== id);
+        // todo-core 함수 사용
+        this.todos = deleteTodoById(this.todos, id);
         this.saveTodos();
         this.render();
         this.sound.play('click');
@@ -1032,23 +1056,12 @@ class TodoManager {
 
     // ===== 핀 고정 =====
     togglePin(id) {
-        const todo = this.todos.find(t => t.id === id);
-        if (!todo) return;
-
-        todo.pinned = !todo.pinned;
-        this.sortTodos();
+        // todo-core 함수 사용
+        this.todos = togglePinById(this.todos, id);
+        this.todos = sortTodos(this.todos);
         this.saveTodos();
         this.render();
         this.sound.play('click');
-    }
-
-    sortTodos() {
-        // 핀 고정된 항목을 상단으로
-        this.todos.sort((a, b) => {
-            if (a.pinned && !b.pinned) return -1;
-            if (!a.pinned && b.pinned) return 1;
-            return 0;
-        });
     }
 
     // ===== 더블클릭 편집 =====
@@ -1172,20 +1185,13 @@ class TodoManager {
 
     // ===== 유틸리티 =====
     getAgeHours(createdAt) {
-        const created = new Date(createdAt);
-        const now = new Date();
-        return (now - created) / (1000 * 60 * 60);
+        // todo-core 함수 사용
+        return getTodoAgeHours(createdAt);
     }
 
     getAgeText(createdAt) {
-        const hours = this.getAgeHours(createdAt);
-        if (hours < 1) return '방금 전';
-        if (hours < 24) return `${Math.floor(hours)}시간 전`;
-        const days = Math.floor(hours / 24);
-        if (days === 1) return '어제';
-        if (days < 7) return `${days}일 전`;
-        if (days < 30) return `${Math.floor(days / 7)}주 전`;
-        return `${Math.floor(days / 30)}달 전`;
+        // todo-core 함수 사용
+        return getTodoAgeText(createdAt);
     }
 
     getAgeClass(createdAt) {
@@ -1276,8 +1282,9 @@ class TodoManager {
             todoList.appendChild(fragment);
         }
 
-        const activeCount = this.todos.filter(t => !t.completed).length;
-        const completedCount = this.todos.length - activeCount;
+        // todo-core 함수 사용
+        const activeCount = getActiveCount(this.todos);
+        const completedCount = getCompletedCount(this.todos);
         todoCount.textContent = `${activeCount}개 남음`;
         clearCompletedBtn.style.display = completedCount > 0 ? 'block' : 'none';
     }
