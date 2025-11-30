@@ -619,6 +619,70 @@ body {
     border-top: 1px solid var(--mac-divider);
     font-size: var(--font-size-xs);
     color: var(--mac-text-tertiary);
+    gap: 8px;
+}
+
+.status-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.control-btn {
+    background: none;
+    border: none;
+    color: var(--mac-text-tertiary);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 6px;
+    border-radius: var(--radius-btn);
+    transition: all 0.15s ease;
+    opacity: 0.6;
+}
+
+.control-btn:hover {
+    background: var(--mac-item-hover);
+    opacity: 1;
+}
+
+.control-btn.active {
+    color: var(--mac-accent);
+    opacity: 1;
+}
+
+.opacity-slider {
+    width: 60px;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--mac-divider);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.opacity-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--mac-accent);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.opacity-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.opacity-slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--mac-accent);
+    cursor: pointer;
+    border: none;
 }
 
 .status-right {
@@ -1360,5 +1424,50 @@ body {
     align-items: center;
     gap: 2px;
     margin-left: 8px;
+}
+
+/* ===== 미니멀 모드 ===== */
+.sticker-container.minimal-mode .profile-bar,
+.sticker-container.minimal-mode .input-group,
+.sticker-container.minimal-mode .emoji-picker,
+.sticker-container.minimal-mode .status-bar {
+    display: none !important;
+}
+
+.sticker-container.minimal-mode .content-area {
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.sticker-container.minimal-mode .todo-list {
+    max-height: none;
+}
+
+.sticker-container.minimal-mode .window-title::after {
+    content: ' (미니)';
+    font-size: var(--font-size-xs);
+    color: var(--mac-text-tertiary);
+}
+
+/* 미니멀 모드 힌트 */
+.minimal-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--mac-bg-solid);
+    padding: 8px 16px;
+    border-radius: var(--radius-item);
+    font-size: var(--font-size-sm);
+    color: var(--mac-text-secondary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 50;
+}
+
+.sticker-container.show-hint .minimal-hint {
+    opacity: 1;
 }
 

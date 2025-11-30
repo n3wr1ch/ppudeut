@@ -82,6 +82,10 @@
             <!-- 상태바 -->
             <div class="status-bar">
                 <span id="todoCount">0개 남음</span>
+                <div class="status-controls">
+                    <button id="alwaysOnTopBtn" class="control-btn active" title="항상 위">📌</button>
+                    <input type="range" id="opacitySlider" class="opacity-slider" min="30" max="100" value="100" title="투명도">
+                </div>
                 <div class="status-right">
                     <button id="rouletteBtn" class="status-btn" title="랜덤 선택">🎲</button>
                     <button id="clearCompletedBtn" class="status-btn" style="display: none;">완료 항목 삭제</button>

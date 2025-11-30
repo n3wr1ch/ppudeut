@@ -208,6 +208,7 @@ class TodoManager {
         }
         
         this.applyTheme();
+        this.applyWindowSettings();
         this.bindEvents();
         this.updateStreak();
         this.render();
@@ -239,6 +240,9 @@ class TodoManager {
             theme: 'default',
             soundEnabled: true,
             notificationEnabled: true,
+            opacity: 100,
+            alwaysOnTop: true,
+            minimalMode: false,
         };
     }
 
@@ -317,6 +321,9 @@ class TodoManager {
         const emojiPickerBtn = document.getElementById('emojiPickerBtn');
         const emojiPicker = document.getElementById('emojiPicker');
         const rouletteBtn = document.getElementById('rouletteBtn');
+        const opacitySlider = document.getElementById('opacitySlider');
+        const alwaysOnTopBtn = document.getElementById('alwaysOnTopBtn');
+        const titleBar = document.querySelector('.title-bar');
 
         // 입력
         todoInput?.addEventListener('keypress', (e) => {
@@ -405,6 +412,29 @@ class TodoManager {
         // 룰렛
         rouletteBtn?.addEventListener('click', () => this.spinRoulette());
 
+        // 투명도 슬라이더
+        if (opacitySlider) {
+            opacitySlider.value = this.settings.opacity;
+            opacitySlider.addEventListener('input', (e) => {
+                this.setOpacity(parseInt(e.target.value));
+            });
+        }
+
+        // 항상 위 토글
+        if (alwaysOnTopBtn) {
+            alwaysOnTopBtn.classList.toggle('active', this.settings.alwaysOnTop);
+            alwaysOnTopBtn.addEventListener('click', () => {
+                this.toggleAlwaysOnTop();
+            });
+        }
+
+        // 미니멀 모드 (타이틀바 더블클릭)
+        titleBar?.addEventListener('dblclick', (e) => {
+            // 트래픽 라이트나 설정 버튼 클릭은 제외
+            if (e.target.closest('.traffic-lights') || e.target.closest('.window-actions')) return;
+            this.toggleMinimalMode();
+        });
+
         // 뽀모도로 관련
         this.bindPomodoroEvents();
 
@@ -425,6 +455,87 @@ class TodoManager {
             document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
             activeBtn.classList.add('active');
         }
+    }
+
+    // ===== 윈도우 설정 =====
+    applyWindowSettings() {
+        // 투명도 적용
+        this.setOpacity(this.settings.opacity, false);
+        
+        // 항상 위 적용
+        this.setAlwaysOnTop(this.settings.alwaysOnTop, false);
+        
+        // 미니멀 모드 적용
+        if (this.settings.minimalMode) {
+            document.querySelector('.sticker-container')?.classList.add('minimal-mode');
+        }
+    }
+
+    setOpacity(value, save = true) {
+        this.settings.opacity = value;
+        
+        // Tauri API로 투명도 설정 (웹뷰 자체는 CSS로)
+        const container = document.querySelector('.sticker-container');
+        if (container) {
+            container.style.opacity = value / 100;
+        }
+        
+        if (save) {
+            this.saveSettings();
+            this.sound.play('click');
+        }
+    }
+
+    setAlwaysOnTop(value, save = true) {
+        this.settings.alwaysOnTop = value;
+        
+        if (window.__TAURI__) {
+            const appWindow = window.__TAURI__.window.appWindow;
+            appWindow.setAlwaysOnTop(value).catch(() => {});
+        }
+        
+        // 버튼 상태 업데이트
+        const btn = document.getElementById('alwaysOnTopBtn');
+        if (btn) {
+            btn.classList.toggle('active', value);
+        }
+        
+        if (save) {
+            this.saveSettings();
+        }
+    }
+
+    toggleAlwaysOnTop() {
+        this.setAlwaysOnTop(!this.settings.alwaysOnTop);
+        this.sound.play('click');
+    }
+
+    toggleMinimalMode() {
+        this.settings.minimalMode = !this.settings.minimalMode;
+        const container = document.querySelector('.sticker-container');
+        
+        if (container) {
+            container.classList.toggle('minimal-mode', this.settings.minimalMode);
+            
+            // 창 크기 조절
+            if (window.__TAURI__) {
+                const appWindow = window.__TAURI__.window.appWindow;
+                const { LogicalSize } = window.__TAURI__.window;
+                
+                if (this.settings.minimalMode) {
+                    // 미니멀 모드: 작은 크기
+                    appWindow.setSize(new LogicalSize(340, 200)).catch(() => {});
+                    appWindow.setMinSize(new LogicalSize(200, 100)).catch(() => {});
+                } else {
+                    // 일반 모드: 원래 크기
+                    appWindow.setSize(new LogicalSize(340, 480)).catch(() => {});
+                    appWindow.setMinSize(new LogicalSize(300, 400)).catch(() => {});
+                }
+            }
+        }
+        
+        this.saveSettings();
+        this.sound.play('click');
     }
 
     // ===== 이모지 피커 =====
