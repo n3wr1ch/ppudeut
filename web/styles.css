@@ -1,0 +1,1364 @@
+:root {
+    /* macOS 색상 팔레트 - 라이트 모드 */
+    --mac-bg-glass: rgba(255, 255, 255, 0.78);
+    --mac-bg-solid: #ffffff;
+    --mac-border: rgba(0, 0, 0, 0.08);
+    --mac-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+    --mac-text-primary: #1d1d1f;
+    --mac-text-secondary: #6e6e73;
+    --mac-text-tertiary: #aeaeb2;
+    --mac-accent: #007aff;
+    --mac-accent-light: rgba(0, 122, 255, 0.12);
+    --mac-accent-rgb: 0, 122, 255;
+    --mac-danger: #ff3b30;
+    --mac-success: #34c759;
+    --mac-warning: #ff9500;
+    --mac-item-bg: rgba(0, 0, 0, 0.03);
+    --mac-item-hover: rgba(0, 0, 0, 0.06);
+    --mac-input-bg: rgba(0, 0, 0, 0.04);
+    --mac-input-border: rgba(0, 0, 0, 0.08);
+    --mac-divider: rgba(0, 0, 0, 0.06);
+
+    /* 창 컨트롤 */
+    --win-close: #ff5f57;
+    --win-minimize: #febc2e;
+    --win-maximize: #28c840;
+
+    /* 간격 및 라운딩 */
+    --radius-window: 12px;
+    --radius-item: 8px;
+    --radius-btn: 6px;
+    --radius-input: 8px;
+    
+    /* 타이포그래피 */
+    --font-size-xs: 11px;
+    --font-size-sm: 12px;
+    --font-size-base: 14px;
+    --font-size-lg: 16px;
+    --line-height: 1.5;
+}
+
+/* 테마 색상 */
+[data-theme="pink"] {
+    --mac-accent: #ff2d55;
+    --mac-accent-light: rgba(255, 45, 85, 0.12);
+    --mac-accent-rgb: 255, 45, 85;
+}
+[data-theme="orange"] {
+    --mac-accent: #ff9500;
+    --mac-accent-light: rgba(255, 149, 0, 0.12);
+    --mac-accent-rgb: 255, 149, 0;
+}
+[data-theme="green"] {
+    --mac-accent: #34c759;
+    --mac-accent-light: rgba(52, 199, 89, 0.12);
+    --mac-accent-rgb: 52, 199, 89;
+}
+[data-theme="purple"] {
+    --mac-accent: #af52de;
+    --mac-accent-light: rgba(175, 82, 222, 0.12);
+    --mac-accent-rgb: 175, 82, 222;
+}
+[data-theme="mint"] {
+    --mac-accent: #00c7be;
+    --mac-accent-light: rgba(0, 199, 190, 0.12);
+    --mac-accent-rgb: 0, 199, 190;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --mac-bg-glass: rgba(40, 40, 42, 0.85);
+        --mac-bg-solid: #1c1c1e;
+        --mac-border: rgba(255, 255, 255, 0.1);
+        --mac-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+        --mac-text-primary: #f5f5f7;
+        --mac-text-secondary: #98989d;
+        --mac-text-tertiary: #636366;
+        --mac-item-bg: rgba(255, 255, 255, 0.06);
+        --mac-item-hover: rgba(255, 255, 255, 0.1);
+        --mac-input-bg: rgba(255, 255, 255, 0.08);
+        --mac-input-border: rgba(255, 255, 255, 0.1);
+        --mac-divider: rgba(255, 255, 255, 0.08);
+    }
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+    background: transparent;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: var(--font-size-base);
+    line-height: var(--line-height);
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    color: var(--mac-text-primary);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ===== 메인 컨테이너 ===== */
+.sticker-container {
+    width: 100%;
+    height: 100%;
+    background: var(--mac-bg-glass);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border-radius: var(--radius-window);
+    box-shadow: var(--mac-shadow);
+    border: 1px solid var(--mac-border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: window-appear 0.3s ease-out;
+    position: relative;
+}
+
+@keyframes window-appear {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ===== 타이틀 바 ===== */
+.title-bar {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    background: transparent;
+    border-bottom: 1px solid var(--mac-divider);
+    -webkit-app-region: drag;
+    flex-shrink: 0;
+}
+
+.traffic-lights {
+    display: flex;
+    gap: 8px;
+    -webkit-app-region: no-drag;
+}
+
+.traffic-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.traffic-light:hover {
+    transform: scale(1.1);
+}
+
+.traffic-light:active {
+    transform: scale(0.95);
+}
+
+.traffic-light.close { background: var(--win-close); }
+.traffic-light.minimize { background: var(--win-minimize); }
+.traffic-light.maximize { background: var(--win-maximize); }
+
+.traffic-lights:hover .traffic-light::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 9px;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.5);
+    line-height: 1;
+}
+
+.traffic-lights:hover .traffic-light.close::after { content: '×'; }
+.traffic-lights:hover .traffic-light.minimize::after { content: '−'; font-size: 11px; }
+.traffic-lights:hover .traffic-light.maximize::after { content: '+'; font-size: 10px; }
+
+.window-title {
+    flex: 1;
+    text-align: center;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--mac-text-secondary);
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.window-actions {
+    -webkit-app-region: no-drag;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    padding: 6px;
+    border-radius: var(--radius-btn);
+    color: var(--mac-text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn:hover {
+    background: var(--mac-item-hover);
+    color: var(--mac-text-primary);
+}
+
+/* ===== 프로필 바 ===== */
+.profile-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--mac-item-bg);
+    border-bottom: 1px solid var(--mac-divider);
+}
+
+.profile-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.level-badge {
+    background: linear-gradient(135deg, var(--mac-accent), rgba(var(--mac-accent-rgb), 0.7));
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(var(--mac-accent-rgb), 0.3);
+}
+
+.xp-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 160px;
+}
+
+.xp-bar {
+    height: 6px;
+    background: var(--mac-divider);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--mac-accent), rgba(var(--mac-accent-rgb), 0.7));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.xp-text {
+    font-size: var(--font-size-xs);
+    color: var(--mac-text-tertiary);
+}
+
+.profile-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.streak-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--mac-item-hover);
+    border-radius: 12px;
+    cursor: default;
+}
+
+.streak-icon {
+    font-size: 14px;
+}
+
+.streak-count {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--mac-text-primary);
+}
+
+.streak-badge.active {
+    background: linear-gradient(135deg, #ff9500, #ff5e3a);
+    animation: pulse-streak 2s ease-in-out infinite;
+}
+
+.streak-badge.active .streak-count {
+    color: white;
+}
+
+@keyframes pulse-streak {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* ===== 콘텐츠 영역 ===== */
+.content-area {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    gap: 12px;
+}
+
+/* ===== 입력 필드 ===== */
+.input-group {
+    position: relative;
+    display: flex;
+    gap: 8px;
+}
+
+.todo-input {
+    flex: 1;
+    padding: 12px 14px;
+    border: 1px solid var(--mac-input-border);
+    border-radius: var(--radius-input);
+    background: var(--mac-input-bg);
+    font-size: var(--font-size-base);
+    color: var(--mac-text-primary);
+    transition: all 0.2s ease;
+}
+
+.todo-input:hover {
+    border-color: var(--mac-text-tertiary);
+}
+
+.todo-input:focus {
+    outline: none;
+    background: var(--mac-bg-solid);
+    border-color: var(--mac-accent);
+    box-shadow: 0 0 0 3px var(--mac-accent-light);
+}
+
+.todo-input::placeholder {
+    color: var(--mac-text-tertiary);
+}
+
+.emoji-picker-btn {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--mac-input-border);
+    border-radius: var(--radius-input);
+    background: var(--mac-input-bg);
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.emoji-picker-btn:hover {
+    background: var(--mac-item-hover);
+    border-color: var(--mac-text-tertiary);
+}
+
+/* ===== 이모지 피커 ===== */
+.emoji-picker {
+    background: var(--mac-bg-solid);
+    border: 1px solid var(--mac-border);
+    border-radius: var(--radius-item);
+    padding: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    animation: fade-in 0.15s ease;
+}
+
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+}
+
+.emoji-option {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    border-radius: var(--radius-btn);
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.emoji-option:hover {
+    background: var(--mac-item-hover);
+    transform: scale(1.1);
+}
+
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 할 일 목록 ===== */
+.todo-list {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 4px;
+}
+
+.todo-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px;
+    background: var(--mac-item-bg);
+    border-radius: var(--radius-item);
+    transition: all 0.2s ease;
+    cursor: grab;
+    position: relative;
+}
+
+.todo-item:hover {
+    background: var(--mac-item-hover);
+}
+
+.todo-item:active {
+    cursor: grabbing;
+}
+
+.todo-item.dragging {
+    opacity: 0.6;
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.todo-item.drag-over {
+    background: var(--mac-accent-light);
+    border: 1px dashed var(--mac-accent);
+}
+
+.todo-item.completing {
+    animation: complete-pulse 0.4s ease;
+}
+
+@keyframes complete-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); background: var(--mac-accent-light); }
+    100% { transform: scale(1); }
+}
+
+/* ===== 체크박스 ===== */
+.todo-checkbox {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--mac-text-tertiary);
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.todo-checkbox:hover {
+    border-color: var(--mac-accent);
+}
+
+.todo-checkbox:checked {
+    background: var(--mac-accent);
+    border-color: var(--mac-accent);
+}
+
+.todo-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 5px;
+    width: 4px;
+    height: 7px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* ===== 할 일 콘텐츠 ===== */
+.todo-content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-left: 12px;
+    min-width: 0;
+}
+
+.todo-text {
+    font-size: var(--font-size-base);
+    color: var(--mac-text-primary);
+    word-break: break-word;
+    line-height: var(--line-height);
+}
+
+.todo-item.completed .todo-text {
+    color: var(--mac-text-tertiary);
+    text-decoration: line-through;
+}
+
+.todo-emoji {
+    margin-right: 6px;
+}
+
+.todo-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+
+.todo-age {
+    font-size: var(--font-size-xs);
+    color: var(--mac-text-tertiary);
+}
+
+.todo-age.old {
+    color: var(--mac-warning);
+}
+
+.todo-age.very-old {
+    color: var(--mac-danger);
+}
+
+.xp-gain {
+    font-size: var(--font-size-xs);
+    color: var(--mac-accent);
+    font-weight: 600;
+}
+
+/* ===== 삭제 버튼 ===== */
+.delete-btn {
+    opacity: 0;
+    background: none;
+    border: none;
+    color: var(--mac-text-tertiary);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--radius-btn);
+    font-size: 16px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.todo-item:hover .delete-btn {
+    opacity: 1;
+}
+
+.delete-btn:hover {
+    color: var(--mac-danger);
+    background: rgba(255, 59, 48, 0.1);
+}
+
+/* ===== 빈 상태 ===== */
+.empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--mac-text-tertiary);
+    padding: 32px;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    opacity: 0.6;
+}
+
+.empty-text {
+    font-size: var(--font-size-base);
+    font-weight: 500;
+}
+
+.empty-hint {
+    font-size: var(--font-size-sm);
+    margin-top: 4px;
+    color: var(--mac-text-tertiary);
+}
+
+/* ===== 상태바 ===== */
+.status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid var(--mac-divider);
+    font-size: var(--font-size-xs);
+    color: var(--mac-text-tertiary);
+}
+
+.status-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.status-btn {
+    background: none;
+    border: none;
+    color: var(--mac-text-secondary);
+    cursor: pointer;
+    font-size: var(--font-size-xs);
+    padding: 4px 8px;
+    border-radius: var(--radius-btn);
+    transition: all 0.15s ease;
+}
+
+.status-btn:hover {
+    background: var(--mac-item-hover);
+    color: var(--mac-text-primary);
+}
+
+/* ===== 설정 패널 ===== */
+.settings-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--mac-bg-glass);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    animation: slide-up 0.25s ease;
+}
+
+@keyframes slide-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid var(--mac-divider);
+}
+
+.settings-header h3 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+}
+
+.close-settings {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--mac-text-secondary);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--radius-btn);
+    transition: all 0.15s ease;
+}
+
+.close-settings:hover {
+    background: var(--mac-item-hover);
+    color: var(--mac-text-primary);
+}
+
+.settings-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.settings-section {
+    margin-bottom: 24px;
+}
+
+.settings-label {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--mac-text-secondary);
+    margin-bottom: 12px;
+}
+
+/* 테마 피커 */
+.theme-picker {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.theme-btn {
+    width: 32px;
+    height: 32px;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    background: var(--theme-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.theme-btn:hover {
+    transform: scale(1.1);
+}
+
+.theme-btn.active {
+    border-color: var(--mac-text-primary);
+    box-shadow: 0 0 0 2px var(--mac-bg-solid);
+}
+
+/* 토글 스위치 */
+.toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-label {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--mac-item-hover);
+    border-radius: 12px;
+    transition: 0.3s;
+}
+
+.toggle-label::before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch input:checked + .toggle-label {
+    background: var(--mac-accent);
+}
+
+.toggle-switch input:checked + .toggle-label::before {
+    transform: translateX(20px);
+}
+
+/* 통계 그리드 */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.stat-item {
+    background: var(--mac-item-bg);
+    padding: 12px;
+    border-radius: var(--radius-item);
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--mac-accent);
+}
+
+.stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--mac-text-tertiary);
+    margin-top: 4px;
+}
+
+/* 업적 리스트 */
+.achievements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.achievement-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--mac-item-bg);
+    border-radius: var(--radius-item);
+    transition: all 0.2s ease;
+}
+
+.achievement-item.locked {
+    opacity: 0.5;
+    filter: grayscale(1);
+}
+
+.achievement-item .icon {
+    font-size: 24px;
+}
+
+.achievement-item .info {
+    flex: 1;
+}
+
+.achievement-item .name {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.achievement-item .desc {
+    font-size: var(--font-size-xs);
+    color: var(--mac-text-tertiary);
+}
+
+/* 데이터 액션 */
+.data-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.danger-btn {
+    padding: 8px 16px;
+    background: var(--mac-danger);
+    color: white;
+    border: none;
+    border-radius: var(--radius-btn);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.danger-btn:hover {
+    filter: brightness(1.1);
+}
+
+/* ===== 레벨업 모달 ===== */
+.level-up-modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    animation: fade-in 0.3s ease;
+}
+
+.level-up-content {
+    background: var(--mac-bg-solid);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    animation: bounce-in 0.5s ease;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes bounce-in {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.level-up-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    animation: bounce 0.6s ease infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.level-up-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--mac-text-primary);
+}
+
+.level-up-level {
+    font-size: 36px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--mac-accent), rgba(var(--mac-accent-rgb), 0.7));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 8px 0;
+}
+
+.level-up-message {
+    font-size: var(--font-size-sm);
+    color: var(--mac-text-secondary);
+    margin-bottom: 16px;
+}
+
+.level-up-close {
+    padding: 10px 32px;
+    background: var(--mac-accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-btn);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.level-up-close:hover {
+    filter: brightness(1.1);
+}
+
+/* ===== 업적 토스트 ===== */
+.achievement-toast {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--mac-bg-solid);
+    border: 1px solid var(--mac-border);
+    border-radius: 12px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    z-index: 150;
+    animation: toast-in 0.3s ease, toast-out 0.3s ease 2.7s forwards;
+}
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes toast-out {
+    from { opacity: 1; transform: translateX(-50%) translateY(0); }
+    to { opacity: 0; transform: translateX(-50%) translateY(20px); }
+}
+
+.achievement-toast .achievement-icon {
+    font-size: 28px;
+}
+
+.achievement-toast .achievement-title {
+    font-size: var(--font-size-xs);
+    color: var(--mac-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.achievement-toast .achievement-name {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--mac-text-primary);
+}
+
+/* ===== Confetti 캔버스 ===== */
+#confettiCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 300;
+}
+
+/* ===== 스크롤바 ===== */
+.todo-list::-webkit-scrollbar,
+.settings-content::-webkit-scrollbar,
+.achievements-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.todo-list::-webkit-scrollbar-track,
+.settings-content::-webkit-scrollbar-track,
+.achievements-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.todo-list::-webkit-scrollbar-thumb,
+.settings-content::-webkit-scrollbar-thumb,
+.achievements-list::-webkit-scrollbar-thumb {
+    background: var(--mac-text-tertiary);
+    border-radius: 3px;
+    opacity: 0.3;
+}
+
+.todo-list::-webkit-scrollbar-thumb:hover,
+.settings-content::-webkit-scrollbar-thumb:hover,
+.achievements-list::-webkit-scrollbar-thumb:hover {
+    background: var(--mac-text-secondary);
+}
+
+/* ===== 애니메이션 ===== */
+@keyframes slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.todo-item {
+    animation: slide-in 0.25s ease-out;
+}
+
+/* ===== 포커스 스타일 ===== */
+.todo-item:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--mac-accent-light), 0 0 0 3px var(--mac-accent);
+}
+
+.todo-item:focus:not(:focus-visible) {
+    box-shadow: none;
+}
+
+/* ===== XP 플로팅 텍스트 ===== */
+.xp-float {
+    position: absolute;
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--mac-accent);
+    pointer-events: none;
+    animation: float-up 1s ease-out forwards;
+    z-index: 100;
+}
+
+@keyframes float-up {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-40px) scale(1.2);
+    }
+}
+
+/* ===== 반응형 ===== */
+@media (max-width: 360px) {
+    .profile-bar {
+        padding: 8px 12px;
+    }
+    
+    .xp-container {
+        max-width: 100px;
+    }
+    
+    .level-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+}
+
+/* ===== 뽀모도로 타이머 모달 ===== */
+.pomodoro-modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    animation: fade-in 0.3s ease;
+}
+
+.pomodoro-content {
+    background: var(--mac-bg-solid);
+    border-radius: 16px;
+    padding: 24px;
+    width: 280px;
+    text-align: center;
+    animation: bounce-in 0.3s ease;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.pomodoro-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.pomodoro-header h3 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin: 0;
+}
+
+.close-pomodoro {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--mac-text-secondary);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.close-pomodoro:hover {
+    color: var(--mac-text-primary);
+}
+
+.pomodoro-task {
+    font-size: var(--font-size-sm);
+    color: var(--mac-text-secondary);
+    margin-bottom: 20px;
+    padding: 8px 12px;
+    background: var(--mac-item-bg);
+    border-radius: var(--radius-btn);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pomodoro-timer {
+    font-size: 56px;
+    font-weight: 700;
+    color: var(--mac-text-primary);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -2px;
+    margin-bottom: 16px;
+}
+
+.pomodoro-timer.running {
+    color: var(--mac-accent);
+}
+
+.pomodoro-timer.finished {
+    color: var(--mac-success);
+    animation: pulse 1s ease infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.pomodoro-progress {
+    height: 6px;
+    background: var(--mac-divider);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.pomodoro-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--mac-accent), var(--mac-success));
+    border-radius: 3px;
+    width: 0%;
+    transition: width 1s linear;
+}
+
+.pomodoro-controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.pomodoro-btn {
+    padding: 10px 20px;
+    background: var(--mac-accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-btn);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.pomodoro-btn:hover {
+    filter: brightness(1.1);
+}
+
+.pomodoro-btn.secondary {
+    background: var(--mac-item-hover);
+    color: var(--mac-text-primary);
+}
+
+.pomodoro-presets {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.preset-btn {
+    padding: 6px 12px;
+    background: var(--mac-item-bg);
+    border: 1px solid transparent;
+    border-radius: var(--radius-btn);
+    font-size: var(--font-size-xs);
+    color: var(--mac-text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.preset-btn:hover {
+    background: var(--mac-item-hover);
+}
+
+.preset-btn.active {
+    background: var(--mac-accent-light);
+    border-color: var(--mac-accent);
+    color: var(--mac-accent);
+}
+
+/* ===== 핀 고정 버튼 ===== */
+.pin-btn {
+    opacity: 0;
+    background: none;
+    border: none;
+    color: var(--mac-text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--radius-btn);
+    font-size: 14px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.todo-item:hover .pin-btn {
+    opacity: 1;
+}
+
+.pin-btn:hover {
+    color: var(--mac-warning);
+    background: rgba(255, 149, 0, 0.1);
+}
+
+.pin-btn.pinned {
+    opacity: 1;
+    color: var(--mac-warning);
+}
+
+.todo-item.pinned {
+    border-left: 3px solid var(--mac-warning);
+    background: rgba(255, 149, 0, 0.05);
+}
+
+/* ===== 뽀모도로 버튼 (할 일 아이템) ===== */
+.pomodoro-start-btn {
+    opacity: 0;
+    background: none;
+    border: none;
+    color: var(--mac-text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--radius-btn);
+    font-size: 14px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.todo-item:hover .pomodoro-start-btn {
+    opacity: 1;
+}
+
+.pomodoro-start-btn:hover {
+    color: var(--mac-danger);
+    background: rgba(255, 59, 48, 0.1);
+}
+
+/* ===== 인라인 편집 ===== */
+.todo-text.editing {
+    background: var(--mac-input-bg);
+    border: 1px solid var(--mac-accent);
+    border-radius: var(--radius-btn);
+    padding: 4px 8px;
+    margin: -4px -8px;
+    outline: none;
+    min-width: 100px;
+}
+
+/* ===== 예상 시간 배지 ===== */
+.time-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 6px;
+    background: var(--mac-item-hover);
+    border-radius: 10px;
+    font-size: var(--font-size-xs);
+    color: var(--mac-text-tertiary);
+}
+
+.time-badge.overdue {
+    background: rgba(255, 59, 48, 0.1);
+    color: var(--mac-danger);
+}
+
+/* ===== 반복 배지 ===== */
+.repeat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 6px;
+    background: var(--mac-accent-light);
+    border-radius: 10px;
+    font-size: var(--font-size-xs);
+    color: var(--mac-accent);
+}
+
+/* ===== 액션 버튼 그룹 ===== */
+.todo-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: 8px;
+}
+

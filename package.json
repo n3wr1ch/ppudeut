@@ -1,0 +1,32 @@
+{
+  "name": "ppudeut",
+  "version": "1.0.0",
+  "description": "\ubd90\ub73b - \uac8c\uc774\ubbf8\ud53c\ucf00\uc774\uc158 \ud560 \uc77c \uad00\ub9ac \uc571",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "lint": "eslint web/main.js",
+    "test": "node --experimental-modules web/test-todo-core.js"
+  },
+  "keywords": [
+    "tauri",
+    "todo",
+    "sticky"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.5.0",
+    "eslint": "^9.39.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7"
+  },
+  "lint-staged": {
+    "web/*.js": [
+      "eslint --fix"
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+[package]
+name = "ppudeut"
+version = "1.0.0"
+description = "뿌듯 - 게이미피케이션 할 일 관리 앱"
+authors = ["you"]
+license = ""
+repository = ""
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+tauri = { version = "1.5", features = [ "window-show", "window-unminimize", "window-start-dragging", "window-unmaximize", "window-maximize", "window-set-always-on-top", "window-minimize", "window-hide", "window-close", "shell-open"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
