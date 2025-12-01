@@ -2,6 +2,207 @@
  * 성능 최적화 유틸리티
  */
 
+// ===== WeakMap/WeakSet 기반 메모리 관리 =====
+
+/**
+ * 이벤트 리스너 추적 - WeakMap 활용으로 메모리 누수 방지
+ * @type {WeakMap<HTMLElement, Map<string, Function[]>>}
+ */
+const elementListeners = new WeakMap();
+
+/**
+ * 타이머 추적 - WeakMap 활용
+ * @type {WeakMap<Object, Set<number>>}
+ */
+const objectTimers = new WeakMap();
+
+/**
+ * 요소에 이벤트 리스너 추가 및 추적
+ * @param {HTMLElement} element - 대상 엘리먼트
+ * @param {string} eventType - 이벤트 타입
+ * @param {Function} handler - 핸들러 함수
+ * @param {Object} [options] - addEventListener 옵션
+ * @returns {Function} - cleanup 함수
+ */
+export function addTrackedEventListener(element, eventType, handler, options) {
+    if (!element || typeof handler !== 'function') return () => {};
+
+    // 리스너 맵 초기화
+    if (!elementListeners.has(element)) {
+        elementListeners.set(element, new Map());
+    }
+
+    const listenersMap = elementListeners.get(element);
+    
+    if (!listenersMap.has(eventType)) {
+        listenersMap.set(eventType, []);
+    }
+
+    listenersMap.get(eventType).push(handler);
+    element.addEventListener(eventType, handler, options);
+
+    // cleanup 함수 반환
+    return () => {
+        element.removeEventListener(eventType, handler, options);
+        const handlers = listenersMap.get(eventType);
+        if (handlers) {
+            const index = handlers.indexOf(handler);
+            if (index > -1) {
+                handlers.splice(index, 1);
+            }
+        }
+    };
+}
+
+/**
+ * 요소의 모든 이벤트 리스너 제거
+ * @param {HTMLElement} element - 대상 엘리먼트
+ */
+export function removeAllTrackedListeners(element) {
+    if (!elementListeners.has(element)) return;
+
+    const listenersMap = elementListeners.get(element);
+    
+    listenersMap.forEach((handlers, eventType) => {
+        handlers.forEach(handler => {
+            element.removeEventListener(eventType, handler);
+        });
+    });
+
+    elementListeners.delete(element);
+}
+
+/**
+ * 객체에 타이머 추가 및 추적
+ * @param {Object} owner - 타이머 소유 객체
+ * @param {Function} callback - 콜백 함수
+ * @param {number} delay - 지연 시간 (ms)
+ * @returns {{timerId: number, cleanup: Function}} - 타이머 ID와 cleanup 함수
+ */
+export function addTrackedTimeout(owner, callback, delay) {
+    if (!objectTimers.has(owner)) {
+        objectTimers.set(owner, new Set());
+    }
+
+    const timers = objectTimers.get(owner);
+    const timerId = setTimeout(() => {
+        callback();
+        timers.delete(timerId);
+    }, delay);
+
+    timers.add(timerId);
+
+    return {
+        timerId,
+        cleanup: () => {
+            clearTimeout(timerId);
+            timers.delete(timerId);
+        }
+    };
+}
+
+/**
+ * 객체에 인터벌 추가 및 추적
+ * @param {Object} owner - 인터벌 소유 객체
+ * @param {Function} callback - 콜백 함수
+ * @param {number} interval - 인터벌 시간 (ms)
+ * @returns {{intervalId: number, cleanup: Function}} - 인터벌 ID와 cleanup 함수
+ */
+export function addTrackedInterval(owner, callback, interval) {
+    if (!objectTimers.has(owner)) {
+        objectTimers.set(owner, new Set());
+    }
+
+    const timers = objectTimers.get(owner);
+    const intervalId = setInterval(callback, interval);
+    timers.add(intervalId);
+
+    return {
+        intervalId,
+        cleanup: () => {
+            clearInterval(intervalId);
+            timers.delete(intervalId);
+        }
+    };
+}
+
+/**
+ * 객체의 모든 타이머/인터벌 정리
+ * @param {Object} owner - 타이머 소유 객체
+ */
+export function clearAllTrackedTimers(owner) {
+    if (!objectTimers.has(owner)) return;
+
+    const timers = objectTimers.get(owner);
+    timers.forEach(id => {
+        clearTimeout(id);
+        clearInterval(id);
+    });
+
+    objectTimers.delete(owner);
+}
+
+/**
+ * 메모리 누수 체커 유틸리티
+ */
+export class MemoryLeakChecker {
+    constructor() {
+        /** @type {WeakSet<Object>} - 추적 중인 객체들 */
+        this.trackedObjects = new WeakSet();
+        /** @type {Map<string, number>} - 카운터 (디버그용) */
+        this.counters = new Map();
+    }
+
+    /**
+     * 객체 추적 시작
+     * @param {Object} obj - 추적할 객체
+     * @param {string} [label] - 디버그 라벨
+     */
+    track(obj, label = 'unknown') {
+        if (obj && typeof obj === 'object') {
+            this.trackedObjects.add(obj);
+            this.counters.set(label, (this.counters.get(label) || 0) + 1);
+        }
+    }
+
+    /**
+     * 객체 추적 해제
+     * @param {Object} obj - 해제할 객체
+     * @param {string} [label] - 디버그 라벨
+     */
+    untrack(obj, label = 'unknown') {
+        if (obj && typeof obj === 'object') {
+            this.trackedObjects.delete(obj);
+            const count = this.counters.get(label) || 0;
+            if (count > 0) {
+                this.counters.set(label, count - 1);
+            }
+        }
+    }
+
+    /**
+     * 현재 추적 상태 리포트 (디버그용)
+     * @returns {Object} - 추적 통계
+     */
+    getReport() {
+        const report = {};
+        this.counters.forEach((count, label) => {
+            report[label] = count;
+        });
+        return report;
+    }
+
+    /**
+     * 카운터 초기화
+     */
+    reset() {
+        this.counters.clear();
+    }
+}
+
+// 전역 메모리 누수 체커 인스턴스
+export const memoryLeakChecker = new MemoryLeakChecker();
+
 /**
  * Debounce 함수 - 연속 호출 방지
  * @param {Function} func - 실행할 함수

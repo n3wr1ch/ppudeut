@@ -4,7 +4,6 @@
 
 import { 
     validateAndSanitizeInput, 
-    escapeHtml,
     safeLocalStorageSet,
     safeLocalStorageGet,
     logError,
@@ -12,18 +11,13 @@ import {
 } from './security-utils.js';
 
 import {
-    debounce,
-    throttle,
     rafThrottle,
-    delegateEvent,
-    BatchUpdateQueue
+    BatchUpdateQueue,
+    clearAllTrackedTimers
 } from './performance-utils.js';
 
 import {
-    ModalManager,
-    showToast,
-    AnimationUtils,
-    DOMUtils
+    showToast
 } from './ui-utils.js';
 
 import {
@@ -36,7 +30,6 @@ import {
     getTodoAgeHours,
     getTodoAgeText,
     calculateXP,
-    updateTodoText,
     togglePinById,
 } from './todo-core.js';
 
@@ -50,177 +43,21 @@ import {
     SearchFilterManager,
 } from './backup-utils.js';
 
+import { SoundManager } from './sound-manager.js';
+import { ConfettiManager } from './confetti-manager.js';
+
 import './types.js';
 
-// ===== 상수 정의 =====
-const EMOJIS = ['📝', '🎯', '💪', '🔥', '⭐', '💡', '📚', '🎨', '🏃', '🍎', '☕', '🎵', '🌟', '💎', '🚀', '🌈'];
-
-const MOTIVATIONAL_QUOTES = [
-    { text: "작은 진전도 진전이다.", author: "Unknown" },
-    { text: "오늘 할 수 있는 일을 내일로 미루지 마라.", author: "벤자민 프랭클린" },
-    { text: "시작이 반이다.", author: "아리스토텔레스" },
-    { text: "꿈을 계속 간직하고 있으면 반드시 실현할 때가 온다.", author: "괴테" },
-    { text: "할 수 있다고 믿는 순간, 방법이 보인다.", author: "Unknown" },
-    { text: "천 리 길도 한 걸음부터.", author: "노자" },
-    { text: "지금 이 순간이 가장 좋은 시작점이다.", author: "Unknown" },
-    { text: "작은 습관이 큰 변화를 만든다.", author: "제임스 클리어" },
-];
-
-const ACHIEVEMENTS = [
-    { id: 'first_todo', name: '첫 걸음', desc: '첫 번째 할 일 완료', icon: '🎉', condition: (s) => s.totalCompleted >= 1 },
-    { id: 'ten_todos', name: '시작이 좋아', desc: '10개의 할 일 완료', icon: '🌟', condition: (s) => s.totalCompleted >= 10 },
-    { id: 'fifty_todos', name: '꾸준함의 힘', desc: '50개의 할 일 완료', icon: '💪', condition: (s) => s.totalCompleted >= 50 },
-    { id: 'hundred_todos', name: '센추리온', desc: '100개의 할 일 완료', icon: '🏆', condition: (s) => s.totalCompleted >= 100 },
-    { id: 'streak_3', name: '3일 연속', desc: '3일 연속 할 일 완료', icon: '🔥', condition: (s) => s.maxStreak >= 3 },
-    { id: 'streak_7', name: '일주일 마스터', desc: '7일 연속 할 일 완료', icon: '⚡', condition: (s) => s.maxStreak >= 7 },
-    { id: 'streak_30', name: '한 달의 기적', desc: '30일 연속 할 일 완료', icon: '👑', condition: (s) => s.maxStreak >= 30 },
-    { id: 'level_5', name: '성장 중', desc: '레벨 5 달성', icon: '📈', condition: (s) => s.level >= 5 },
-    { id: 'level_10', name: '베테랑', desc: '레벨 10 달성', icon: '🎖️', condition: (s) => s.level >= 10 },
-    { id: 'early_bird', name: '얼리버드', desc: '오전 6시 이전에 할 일 완료', icon: '🌅', condition: (s) => s.earlyBird },
-    { id: 'night_owl', name: '올빼미', desc: '자정 이후에 할 일 완료', icon: '🦉', condition: (s) => s.nightOwl },
-    { id: 'speed_demon', name: '스피드 데몬', desc: '하루에 10개 이상 완료', icon: '⚡', condition: (s) => s.maxDailyCompleted >= 10 },
-];
-
-const LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200, 4000, 5000, 6200, 7600, 9200, 11000, 13000, 15500, 18500, 22000, 26000];
-
-// ===== 사운드 효과 (Web Audio API) =====
-class SoundManager {
-    constructor() {
-        this.enabled = true;
-        this.audioContext = null;
-    }
-
-    init() {
-        try {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        } catch {
-            this.enabled = false;
-        }
-    }
-
-    play(type) {
-        if (!this.enabled || !this.audioContext) return;
-        
-        const oscillator = this.audioContext.createOscillator();
-        const gainNode = this.audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(this.audioContext.destination);
-        
-        const now = this.audioContext.currentTime;
-        
-        switch (type) {
-            case 'complete':
-                oscillator.frequency.setValueAtTime(523.25, now); // C5
-                oscillator.frequency.setValueAtTime(659.25, now + 0.1); // E5
-                oscillator.frequency.setValueAtTime(783.99, now + 0.2); // G5
-                gainNode.gain.setValueAtTime(0.3, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-                oscillator.start(now);
-                oscillator.stop(now + 0.4);
-                break;
-            case 'levelup':
-                oscillator.frequency.setValueAtTime(523.25, now);
-                oscillator.frequency.setValueAtTime(659.25, now + 0.1);
-                oscillator.frequency.setValueAtTime(783.99, now + 0.2);
-                oscillator.frequency.setValueAtTime(1046.50, now + 0.3);
-                gainNode.gain.setValueAtTime(0.4, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
-                oscillator.start(now);
-                oscillator.stop(now + 0.6);
-                break;
-            case 'achievement':
-                oscillator.type = 'triangle';
-                oscillator.frequency.setValueAtTime(880, now);
-                oscillator.frequency.setValueAtTime(1108.73, now + 0.15);
-                oscillator.frequency.setValueAtTime(1318.51, now + 0.3);
-                gainNode.gain.setValueAtTime(0.3, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-                oscillator.start(now);
-                oscillator.stop(now + 0.5);
-                break;
-            case 'click':
-                oscillator.frequency.setValueAtTime(800, now);
-                gainNode.gain.setValueAtTime(0.1, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-                oscillator.start(now);
-                oscillator.stop(now + 0.05);
-                break;
-        }
-    }
-
-    setEnabled(enabled) {
-        this.enabled = enabled;
-    }
-}
-
-// ===== Confetti 효과 =====
-class ConfettiManager {
-    constructor(canvas) {
-        this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
-        this.particles = [];
-        this.animating = false;
-    }
-
-    resize() {
-        this.canvas.width = this.canvas.offsetWidth;
-        this.canvas.height = this.canvas.offsetHeight;
-    }
-
-    launch(intensity = 50) {
-        this.resize();
-        const colors = ['#ff3b30', '#ff9500', '#ffcc00', '#34c759', '#007aff', '#af52de', '#ff2d55'];
-        
-        for (let i = 0; i < intensity; i++) {
-            this.particles.push({
-                x: this.canvas.width / 2 + (Math.random() - 0.5) * 100,
-                y: this.canvas.height / 2,
-                vx: (Math.random() - 0.5) * 15,
-                vy: Math.random() * -15 - 5,
-                color: colors[Math.floor(Math.random() * colors.length)],
-                size: Math.random() * 8 + 4,
-                rotation: Math.random() * 360,
-                rotationSpeed: (Math.random() - 0.5) * 10,
-                gravity: 0.3,
-                friction: 0.99,
-            });
-        }
-        
-        if (!this.animating) {
-            this.animating = true;
-            this.animate();
-        }
-    }
-
-    animate() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        this.particles = this.particles.filter(p => {
-            p.vy += p.gravity;
-            p.vx *= p.friction;
-            p.x += p.vx;
-            p.y += p.vy;
-            p.rotation += p.rotationSpeed;
-            
-            this.ctx.save();
-            this.ctx.translate(p.x, p.y);
-            this.ctx.rotate(p.rotation * Math.PI / 180);
-            this.ctx.fillStyle = p.color;
-            this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
-            this.ctx.restore();
-            
-            return p.y < this.canvas.height + 20;
-        });
-        
-        if (this.particles.length > 0) {
-            requestAnimationFrame(() => this.animate());
-        } else {
-            this.animating = false;
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        }
-    }
-}
+// ===== 상수 import =====
+import {
+    EMOJIS,
+    MOTIVATIONAL_QUOTES,
+    ACHIEVEMENTS,
+    LEVEL_XP,
+    DEFAULT_PROFILE,
+    DEFAULT_SETTINGS,
+    VALIDATION,
+} from './constants.js';
 
 // ===== 메인 Todo Manager =====
 class TodoManager {
@@ -248,8 +85,8 @@ class TodoManager {
         this.renderThrottled = rafThrottle(() => this.render());
         
         // 배치 업데이트 큐
-        this.updateQueue = new BatchUpdateQueue((items) => {
-            this.render();
+        this.updateQueue = new BatchUpdateQueue(() => {
+            this.renderThrottled();
         });
         
         // 이벤트 리스너 정리 함수들
@@ -350,39 +187,19 @@ class TodoManager {
             .join('\n');
         
         showToast('키보드 단축키 도움말을 콘솔에서 확인하세요.', { type: 'info' });
-        console.log('=== 키보드 단축키 ===\n' + helpText);
+        // eslint-disable-next-line no-console
+        console.info('=== 키보드 단축키 ===\n' + helpText);
         
         AccessibilityHelper.announce('키보드 단축키 목록이 콘솔에 표시되었습니다.');
     }
 
     // ===== 데이터 관리 =====
     getDefaultProfile() {
-        return {
-            level: 1,
-            xp: 0,
-            totalXP: 0,
-            streak: 0,
-            maxStreak: 0,
-            lastCompletedDate: null,
-            totalCompleted: 0,
-            achievements: [],
-            earlyBird: false,
-            nightOwl: false,
-            maxDailyCompleted: 0,
-            dailyCompleted: 0,
-            dailyDate: null,
-        };
+        return { ...DEFAULT_PROFILE };
     }
 
     getDefaultSettings() {
-        return {
-            theme: 'default',
-            soundEnabled: true,
-            notificationEnabled: true,
-            opacity: 100,
-            alwaysOnTop: true,
-            minimalMode: false,
-        };
+        return { ...DEFAULT_SETTINGS };
     }
 
     loadProfile() {
@@ -450,7 +267,7 @@ class TodoManager {
 
                 // ID가 없으면 새로 생성
                 if (!todo.id) {
-                    todo.id = Date.now() + Math.random();
+                    todo.id = globalThis.crypto.randomUUID();
                 }
 
                 // 텍스트가 없으면 기본값
@@ -460,7 +277,7 @@ class TodoManager {
 
                 // 텍스트 새니타이징
                 const validation = validateAndSanitizeInput(todo.text, { 
-                    maxLength: 200 
+                    maxLength: VALIDATION.TODO_MAX_LENGTH 
                 });
                 
                 return {
@@ -516,13 +333,16 @@ class TodoManager {
             // todo-core 함수 사용
             this.todos = clearCompleted(this.todos);
             this.saveTodos();
-            this.render();
+            this.renderThrottled();
             this.sound.play('click');
         });
 
-        // 드래그 앤 드롭
+        // 드래그 앤 드롭 (이벤트 위임)
         todoList?.addEventListener('dragover', (e) => e.preventDefault());
         todoList?.addEventListener('drop', (e) => this.handleListDrop(e));
+        
+        // ===== 이벤트 위임: todoList의 모든 이벤트를 여기서 처리 =====
+        this.bindTodoListEvents(todoList);
 
         // 설정 패널
         settingsBtn?.addEventListener('click', () => {
@@ -658,6 +478,124 @@ class TodoManager {
         }
     }
 
+    // ===== todoList 이벤트 위임 =====
+    bindTodoListEvents(todoList) {
+        if (!todoList) return;
+
+        // 클릭 이벤트 위임
+        todoList.addEventListener('click', (e) => {
+            const todoItem = e.target.closest('.todo-item');
+            if (!todoItem) return;
+            
+            const id = todoItem.dataset.id;
+            if (!id) return;
+
+            // 체크박스 클릭
+            if (e.target.classList.contains('todo-checkbox')) {
+                e.stopPropagation();
+                todoItem.classList.add('completing');
+                setTimeout(() => this.toggleTodo(id), 200);
+                return;
+            }
+
+            // 삭제 버튼 클릭
+            if (e.target.classList.contains('delete-btn')) {
+                e.stopPropagation();
+                this.deleteTodo(id);
+                return;
+            }
+
+            // 핀 버튼 클릭
+            if (e.target.classList.contains('pin-btn')) {
+                e.stopPropagation();
+                this.togglePin(id);
+                return;
+            }
+
+            // 뽀모도로 버튼 클릭
+            if (e.target.classList.contains('pomodoro-start-btn')) {
+                e.stopPropagation();
+                this.openPomodoroModal(id);
+                return;
+            }
+
+            // 그 외 영역 클릭 시 토글 (단, todo-text 내부가 아닐 때만)
+            if (!e.target.closest('.todo-text[contenteditable="true"]')) {
+                todoItem.classList.add('completing');
+                setTimeout(() => this.toggleTodo(id), 200);
+            }
+        });
+
+        // 더블클릭 이벤트 위임 (편집)
+        todoList.addEventListener('dblclick', (e) => {
+            const textEl = e.target.closest('.todo-text');
+            if (!textEl) return;
+            
+            const todoItem = textEl.closest('.todo-item');
+            if (!todoItem) return;
+            
+            const id = todoItem.dataset.id;
+            if (id) {
+                e.stopPropagation();
+                this.startEditing(id, textEl);
+            }
+        });
+
+        // 키보드 이벤트 위임
+        todoList.addEventListener('keydown', (e) => {
+            const todoItem = e.target.closest('.todo-item');
+            if (!todoItem) return;
+            
+            const id = todoItem.dataset.id;
+            if (!id) return;
+
+            if (e.key === 'Enter') {
+                this.toggleTodo(id);
+            } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                e.preventDefault();
+                this.deleteTodo(id);
+            } else if (e.key === 'F2') {
+                e.preventDefault();
+                const textEl = todoItem.querySelector('.todo-text');
+                if (textEl) this.startEditing(id, textEl);
+            }
+        });
+
+        // 드래그 이벤트 위임
+        todoList.addEventListener('dragstart', (e) => {
+            const todoItem = e.target.closest('.todo-item');
+            if (!todoItem) return;
+            
+            const id = todoItem.dataset.id;
+            if (id) this.handleDragStart(e, id);
+        });
+
+        todoList.addEventListener('dragover', (e) => {
+            const todoItem = e.target.closest('.todo-item');
+            if (todoItem) this.handleDragOver(e);
+        });
+
+        todoList.addEventListener('dragleave', (e) => {
+            const todoItem = e.target.closest('.todo-item');
+            if (todoItem) this.handleDragLeave(e);
+        });
+
+        todoList.addEventListener('drop', (e) => {
+            const todoItem = e.target.closest('.todo-item');
+            if (!todoItem) return;
+            
+            const id = todoItem.dataset.id;
+            if (id) this.handleDrop(e, id);
+        });
+
+        todoList.addEventListener('dragend', () => {
+            document.querySelectorAll('.todo-item').forEach(item => {
+                item.classList.remove('dragging', 'drag-over');
+            });
+            this.draggedItem = null;
+        });
+    }
+
     // ===== 테마 =====
     applyTheme() {
         document.body.setAttribute('data-theme', this.settings.theme);
@@ -761,9 +699,16 @@ class TodoManager {
         const grid = document.getElementById('emojiGrid');
         if (!grid) return;
         
-        grid.innerHTML = EMOJIS.map(emoji => 
-            `<button class="emoji-option" data-emoji="${emoji}">${emoji}</button>`
-        ).join('');
+        // innerHTML 대신 안전한 DOM API 사용
+        grid.textContent = ''; // 기존 내용 제거
+        
+        EMOJIS.forEach(emoji => {
+            const btn = document.createElement('button');
+            btn.className = 'emoji-option';
+            btn.dataset.emoji = emoji;
+            btn.textContent = emoji;
+            grid.appendChild(btn);
+        });
         
         grid.addEventListener('click', (e) => {
             const btn = e.target.closest('.emoji-option');
@@ -779,8 +724,8 @@ class TodoManager {
     addTodo(text) {
         // 입력 검증 및 새니타이징
         const validation = validateAndSanitizeInput(text, { 
-            maxLength: 200, 
-            minLength: 1 
+            maxLength: VALIDATION.TODO_MAX_LENGTH, 
+            minLength: VALIDATION.TODO_MIN_LENGTH 
         });
 
         if (!validation.valid) {
@@ -791,7 +736,7 @@ class TodoManager {
         }
 
         const todo = {
-            id: Date.now(),
+            id: globalThis.crypto.randomUUID(),
             text: validation.sanitized,
             completed: false,
             createdAt: new Date().toISOString(),
@@ -800,7 +745,7 @@ class TodoManager {
 
         this.todos.unshift(todo);
         this.saveTodos();
-        this.render();
+        this.renderThrottled();
         
         // 이모지 선택 초기화
         this.selectedEmoji = null;
@@ -816,16 +761,19 @@ class TodoManager {
 
         const wasCompleted = todo.completed;
         
-        // todo-core 함수 사용
+        // todo-core 함수 사용 (새 배열 반환)
         this.todos = toggleTodoById(this.todos, id);
         this.saveTodos();
 
-        if (!wasCompleted && !todo.completed) {
-            // 완료 시 XP 및 스트릭 처리
-            this.onTodoComplete(todo);
+        // 완료되지 않은 상태에서 토글 = 완료됨
+        if (!wasCompleted) {
+            const updatedTodo = this.todos.find(t => t.id === id);
+            if (updatedTodo?.completed) {
+                this.onTodoComplete(updatedTodo);
+            }
         }
 
-        this.render();
+        this.renderThrottled();
     }
 
     onTodoComplete(todo) {
@@ -874,7 +822,7 @@ class TodoManager {
         // todo-core 함수 사용
         this.todos = deleteTodoById(this.todos, id);
         this.saveTodos();
-        this.render();
+        this.renderThrottled();
         this.sound.play('click');
     }
 
@@ -1179,7 +1127,7 @@ class TodoManager {
         this.todos = togglePinById(this.todos, id);
         this.todos = sortTodos(this.todos);
         this.saveTodos();
-        this.render();
+        this.renderThrottled();
         this.sound.play('click');
     }
 
@@ -1210,8 +1158,8 @@ class TodoManager {
             
             // 입력 검증
             const validation = validateAndSanitizeInput(newText, { 
-                maxLength: 200, 
-                minLength: 1 
+                maxLength: VALIDATION.TODO_MAX_LENGTH, 
+                minLength: VALIDATION.TODO_MIN_LENGTH 
             });
 
             if (validation.valid && validation.sanitized !== todo.text) {
@@ -1278,7 +1226,7 @@ class TodoManager {
             const [item] = this.todos.splice(fromIndex, 1);
             this.todos.splice(toIndex, 0, item);
             this.saveTodos();
-            this.render();
+            this.renderThrottled();
         }
 
         this.draggedItem = null;
@@ -1298,7 +1246,7 @@ class TodoManager {
             const [item] = this.todos.splice(fromIndex, 1);
             this.todos.push(item);
             this.saveTodos();
-            this.render();
+            this.renderThrottled();
         }
     }
 
@@ -1354,21 +1302,38 @@ class TodoManager {
         document.getElementById('statTotalXP').textContent = this.profile.totalXP;
         document.getElementById('statAchievements').textContent = this.profile.achievements.length;
         
-        // 업적 목록
+        // 업적 목록 - innerHTML 대신 안전한 DOM API 사용
         const achievementsList = document.getElementById('achievementsList');
         if (achievementsList) {
-            achievementsList.innerHTML = ACHIEVEMENTS.map(a => {
+            achievementsList.textContent = ''; // 기존 내용 제거
+            
+            ACHIEVEMENTS.forEach(a => {
                 const unlocked = this.profile.achievements.includes(a.id);
-                return `
-                    <div class="achievement-item ${unlocked ? '' : 'locked'}">
-                        <span class="icon">${a.icon}</span>
-                        <div class="info">
-                            <div class="name">${a.name}</div>
-                            <div class="desc">${a.desc}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                
+                const div = document.createElement('div');
+                div.className = `achievement-item ${unlocked ? '' : 'locked'}`;
+                
+                const iconSpan = document.createElement('span');
+                iconSpan.className = 'icon';
+                iconSpan.textContent = a.icon;
+                
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'info';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'name';
+                nameDiv.textContent = a.name;
+                
+                const descDiv = document.createElement('div');
+                descDiv.className = 'desc';
+                descDiv.textContent = a.desc;
+                
+                infoDiv.appendChild(nameDiv);
+                infoDiv.appendChild(descDiv);
+                div.appendChild(iconSpan);
+                div.appendChild(infoDiv);
+                achievementsList.appendChild(div);
+            });
         }
     }
 
@@ -1459,10 +1424,7 @@ class TodoManager {
         pinBtn.className = `pin-btn${todo.pinned ? ' pinned' : ''}`;
         pinBtn.setAttribute('aria-label', '고정');
         pinBtn.textContent = '📌';
-        pinBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.togglePin(todo.id);
-        });
+        // 이벤트는 bindTodoListEvents에서 위임 처리
 
         // 뽀모도로 버튼 (완료되지 않은 항목만)
         if (!todo.completed) {
@@ -1470,10 +1432,7 @@ class TodoManager {
             pomodoroBtn.className = 'pomodoro-start-btn';
             pomodoroBtn.setAttribute('aria-label', '뽀모도로');
             pomodoroBtn.textContent = '🍅';
-            pomodoroBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.openPomodoroModal(todo.id);
-            });
+            // 이벤트는 bindTodoListEvents에서 위임 처리
             actions.appendChild(pomodoroBtn);
         }
 
@@ -1484,6 +1443,7 @@ class TodoManager {
         del.className = 'delete-btn';
         del.setAttribute('aria-label', '삭제');
         del.textContent = '×';
+        // 이벤트는 bindTodoListEvents에서 위임 처리
 
         actions.appendChild(del);
 
@@ -1491,61 +1451,38 @@ class TodoManager {
         li.appendChild(contentWrapper);
         li.appendChild(actions);
 
-        // 이벤트 리스너
-        li.addEventListener('dragstart', (e) => this.handleDragStart(e, todo.id));
-        li.addEventListener('dragover', (e) => this.handleDragOver(e));
-        li.addEventListener('dragleave', (e) => this.handleDragLeave(e));
-        li.addEventListener('drop', (e) => this.handleDrop(e, todo.id));
-        li.addEventListener('dragend', () => {
-            document.querySelectorAll('.todo-item').forEach(item => {
-                item.classList.remove('dragging', 'drag-over');
-            });
-            this.draggedItem = null;
-        });
-
-        // 더블클릭 편집
-        span.addEventListener('dblclick', (e) => {
-            e.stopPropagation();
-            this.startEditing(todo.id, span);
-        });
-
-        // 키보드 접근성
-        li.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                this.toggleTodo(todo.id);
-            } else if (e.key === 'Delete' || e.key === 'Backspace') {
-                e.preventDefault();
-                this.deleteTodo(todo.id);
-            } else if (e.key === 'F2') {
-                e.preventDefault();
-                this.startEditing(todo.id, span);
-            }
-        });
-
-        checkbox.addEventListener('change', (e) => {
-            e.stopPropagation();
-            li.classList.add('completing');
-            setTimeout(() => {
-                this.toggleTodo(todo.id);
-            }, 200);
-        });
-
-        del.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.deleteTodo(todo.id);
-        });
-
-        li.addEventListener('click', (e) => {
-            if (e.target === checkbox || e.target === del || 
-                e.target.classList.contains('pin-btn') || 
-                e.target.classList.contains('pomodoro-start-btn')) return;
-            li.classList.add('completing');
-            setTimeout(() => {
-                this.toggleTodo(todo.id);
-            }, 200);
-        });
+        // 모든 이벤트는 bindTodoListEvents에서 위임 처리됨
+        // (개별 리스너 제거로 메모리 효율 개선)
 
         return li;
+    }
+
+    /**
+     * 리소스 정리 (메모리 누수 방지)
+     */
+    destroy() {
+        // 타이머 정리
+        clearAllTrackedTimers(this);
+        
+        // 뽀모도로 타이머 정리
+        if (this.pomodoro.intervalId) {
+            clearInterval(this.pomodoro.intervalId);
+            this.pomodoro.intervalId = null;
+        }
+        
+        // 이벤트 리스너 정리
+        this.eventCleanupFunctions.forEach(cleanup => cleanup());
+        this.eventCleanupFunctions = [];
+        
+        // 키보드 단축키 비활성화
+        this.shortcuts.disable();
+        
+        // 사운드 및 Confetti 정리
+        this.sound?.destroy();
+        this.confetti?.destroy();
+        
+        // 배치 큐 정리
+        this.updateQueue.clear();
     }
 }
 

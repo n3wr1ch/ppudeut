@@ -91,57 +91,69 @@ export function validateAndSanitizeInput(input, options = {}) {
 }
 
 /**
- * localStorage 데이터 간단 암호화/복호화
- * 주의: 이것은 기본적인 난독화일 뿐 강력한 암호화가 아닙니다.
- * 민감한 데이터는 서버에 저장하는 것을 권장합니다.
+ * localStorage 데이터 난독화(Obfuscation)
+ * 
+ * ⚠️ 보안 경고 ⚠️
+ * 이것은 암호화가 아닙니다! 단순 난독화(obfuscation)일 뿐입니다.
+ * - 키가 소스코드에 하드코딩되어 있어 누구나 복호화 가능
+ * - XOR 암호화는 암호학적으로 안전하지 않음
+ * - 민감한 데이터 보호에는 적합하지 않음
+ * 
+ * 진짜 암호화가 필요하다면:
+ * - Web Crypto API (SubtleCrypto) 사용
+ * - 또는 서버 측 암호화 권장
+ * 
+ * 이 함수는 캐주얼한 관찰자로부터의 난독화 용도로만 사용하세요.
  */
-const CIPHER_KEY = 'ppudeut-secret-key-2025'; // 실제로는 환경변수나 안전한 곳에 저장
+const OBFUSCATION_KEY = 'ppudeut-obfuscation-key-2025';
 
 /**
- * 간단한 XOR 암호화
- * @param {string} text - 암호화할 텍스트
- * @param {string} key - 암호화 키
- * @returns {string} - Base64 인코딩된 암호화 텍스트
+ * 간단한 XOR 난독화 (암호화 아님!)
+ * @deprecated 보안이 필요하면 Web Crypto API 사용 권장
+ * @param {string} text - 난독화할 텍스트
+ * @param {string} key - 난독화 키
+ * @returns {string} - Base64 인코딩된 난독화 텍스트
  */
-export function simpleEncrypt(text, key = CIPHER_KEY) {
+export function simpleEncrypt(text, key = OBFUSCATION_KEY) {
     try {
         const textBytes = new TextEncoder().encode(text);
         const keyBytes = new TextEncoder().encode(key);
         
-        const encrypted = new Uint8Array(textBytes.length);
+        const obfuscated = new Uint8Array(textBytes.length);
         for (let i = 0; i < textBytes.length; i++) {
-            encrypted[i] = textBytes[i] ^ keyBytes[i % keyBytes.length];
+            obfuscated[i] = textBytes[i] ^ keyBytes[i % keyBytes.length];
         }
         
         // Base64 인코딩
-        return btoa(String.fromCharCode(...encrypted));
+        return btoa(String.fromCharCode(...obfuscated));
     } catch (error) {
-        console.error('암호화 실패:', error);
+        console.error('난독화 실패:', error);
         return text; // 실패 시 원본 반환 (폴백)
     }
 }
 
 /**
- * 간단한 XOR 복호화
- * @param {string} encrypted - Base64 인코딩된 암호화 텍스트
- * @param {string} key - 복호화 키
- * @returns {string} - 복호화된 텍스트
+ * 간단한 XOR 난독화 해제 (복호화 아님!)
+ * @deprecated 보안이 필요하면 Web Crypto API 사용 권장
+ * @param {string} obfuscated - Base64 인코딩된 난독화 텍스트
+ * @param {string} key - 난독화 키
+ * @returns {string} - 원본 텍스트
  */
-export function simpleDecrypt(encrypted, key = CIPHER_KEY) {
+export function simpleDecrypt(obfuscated, key = OBFUSCATION_KEY) {
     try {
         // Base64 디코딩
-        const encryptedBytes = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
+        const obfuscatedBytes = Uint8Array.from(atob(obfuscated), c => c.charCodeAt(0));
         const keyBytes = new TextEncoder().encode(key);
         
-        const decrypted = new Uint8Array(encryptedBytes.length);
-        for (let i = 0; i < encryptedBytes.length; i++) {
-            decrypted[i] = encryptedBytes[i] ^ keyBytes[i % keyBytes.length];
+        const decoded = new Uint8Array(obfuscatedBytes.length);
+        for (let i = 0; i < obfuscatedBytes.length; i++) {
+            decoded[i] = obfuscatedBytes[i] ^ keyBytes[i % keyBytes.length];
         }
         
-        return new TextDecoder().decode(decrypted);
+        return new TextDecoder().decode(decoded);
     } catch (error) {
-        console.error('복호화 실패:', error);
-        return encrypted; // 실패 시 원본 반환 (폴백)
+        console.error('난독화 해제 실패:', error);
+        return obfuscated; // 실패 시 원본 반환 (폴백)
     }
 }
 

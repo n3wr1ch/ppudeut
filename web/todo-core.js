@@ -21,7 +21,7 @@ export function addTodoList(todos, text, options = {}) {
     const { emoji = null } = options;
     
     const todo = { 
-        id: Date.now() + Math.random(), // 중복 방지
+        id: crypto.randomUUID(),
         text: t, 
         completed: false, 
         createdAt: new Date().toISOString(),
