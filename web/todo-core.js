@@ -9,24 +9,18 @@ import './types.js';
  * 새 할 일 추가
  * @param {Todo[]} todos - 기존 할 일 목록
  * @param {string} text - 할 일 텍스트
- * @param {Object} [options] - 추가 옵션
- * @param {string|null} [options.emoji] - 이모지
  * @returns {Todo[]} - 새 할 일 목록
  */
-export function addTodoList(todos, text, options = {}) {
+export function addTodoList(todos, text) {
     const t = (text || '').trim();
     if (!t) return todos.slice();
     if (t.length > 200) return todos.slice();
-    
-    const { emoji = null } = options;
     
     const todo = { 
         id: crypto.randomUUID(),
         text: t, 
         completed: false, 
         createdAt: new Date().toISOString(),
-        emoji,
-        pinned: false,
     };
     
     return [todo, ...todos];
@@ -84,15 +78,7 @@ export function updateTodoText(todos, id, newText) {
     return todos.map(t => t.id === id ? { ...t, text } : t);
 }
 
-/**
- * 할 일 고정/고정 해제
- * @param {Todo[]} todos - 할 일 목록
- * @param {number} id - 할 일 ID
- * @returns {Todo[]} - 새 할 일 목록
- */
-export function togglePinById(todos, id) {
-    return todos.map(t => t.id === id ? { ...t, pinned: !t.pinned } : t);
-}
+
 
 /**
  * 완료된 할 일 제거
@@ -104,16 +90,12 @@ export function clearCompleted(todos) {
 }
 
 /**
- * 할 일 정렬 (고정된 항목 우선)
+ * 할 일 정렬
  * @param {Todo[]} todos - 할 일 목록
  * @returns {Todo[]} - 정렬된 할 일 목록
  */
 export function sortTodos(todos) {
-    return [...todos].sort((a, b) => {
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-        return 0;
-    });
+    return [...todos];
 }
 
 /**
@@ -177,19 +159,37 @@ export function getTodoAgeHours(createdAt) {
 }
 
 /**
- * 할 일 나이를 읽기 쉬운 텍스트로 변환
+ * 할 일 나이를 재미있는 텍스트로 변환 (미룬 시간 표현)
  * @param {string} createdAt - 생성 시간 (ISO 8601)
- * @returns {string} - 나이 텍스트
+ * @returns {{text: string, level: number}} - 텍스트와 레벨 (0-5, 높을수록 오래됨)
  */
 export function getTodoAgeText(createdAt) {
     const hours = getTodoAgeHours(createdAt);
-    if (hours < 1) return '방금 전';
-    if (hours < 24) return `${Math.floor(hours)}시간 전`;
+    const minutes = Math.floor((hours % 1) * 60);
+    
+    if (hours < 1) {
+        if (minutes < 1) return { text: '방금 추가!', level: 0 };
+        if (minutes < 5) return { text: '잠깐 미룸', level: 0 };
+        if (minutes < 15) return { text: `${minutes}분 미룸`, level: 0 };
+        if (minutes < 30) return { text: '슬슬 해볼까?', level: 1 };
+        return { text: '30분째 눈치봄', level: 1 };
+    }
+    
+    const floorHours = Math.floor(hours);
+    if (hours < 2) return { text: '1시간 미룸', level: 1 };
+    if (hours < 3) return { text: '2시간째 미적미적', level: 2 };
+    if (hours < 6) return { text: `${floorHours}시간 미룸`, level: 2 };
+    if (hours < 12) return { text: '반나절 묵힘', level: 2 };
+    if (hours < 24) return { text: '하루종일 미룸', level: 3 };
+    
     const days = Math.floor(hours / 24);
-    if (days === 1) return '어제';
-    if (days < 7) return `${days}일 전`;
-    if (days < 30) return `${Math.floor(days / 7)}주 전`;
-    return `${Math.floor(days / 30)}달 전`;
+    if (days === 1) return { text: '어제부터 미룸', level: 3 };
+    if (days === 2) return { text: '이틀째 방치중', level: 3 };
+    if (days < 7) return { text: `${days}일째 숙성중`, level: 4 };
+    if (days < 14) return { text: '일주일 묵은 것', level: 4 };
+    if (days < 30) return { text: `${Math.floor(days / 7)}주째 잠자는 중`, level: 5 };
+    if (days < 60) return { text: '한달 묵은 골동품', level: 5 };
+    return { text: `${Math.floor(days / 30)}달째 화석화 중`, level: 5 };
 }
 
 /**
@@ -209,3 +209,4 @@ export function calculateXP(createdAt) {
     
     return xp;
 }
+

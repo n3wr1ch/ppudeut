@@ -6,9 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>뿌듯</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
 </head>
 
 <body>
+    <!-- 배경 이미지 컨테이너 -->
+    <div class="app-background"></div>
+    <div class="app-overlay"></div>
+
     <div class="sticker-container">
         <!-- 타이틀 바 -->
         <div class="title-bar" data-tauri-drag-region>
@@ -17,86 +23,118 @@
                 <div class="traffic-light minimize" id="minimizeBtn" title="최소화"></div>
                 <div class="traffic-light maximize" id="maximizeBtn" title="최대화"></div>
             </div>
-            <div class="window-title">뿌듯</div>
+            <!-- <div class="window-title">뿌듯</div> -->
             <div class="window-actions">
                 <button class="icon-btn" id="settingsBtn" title="설정">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                        </path>
                     </svg>
                 </button>
             </div>
         </div>
 
-        <!-- 프로필 바 -->
-        <div class="profile-bar" role="region" aria-label="프로필 정보">
-            <div class="profile-left">
-                <div class="level-badge" id="levelBadge" role="status" aria-label="현재 레벨">Lv.1</div>
-                <div class="xp-container">
-                    <div class="xp-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="경험치 진행률">
-                        <div class="xp-fill" id="xpFill" style="width: 0%"></div>
-                    </div>
-                    <span class="xp-text" id="xpText" aria-live="polite">0 / 100 XP</span>
-                </div>
-            </div>
-            <div class="profile-right">
-                <div class="streak-badge" id="streakBadge" title="연속 달성" role="status" aria-label="연속 달성 일수">
-                    <span class="streak-icon" aria-hidden="true">🔥</span>
-                    <span class="streak-count" id="streakCount">0</span>
-                </div>
+        <!-- 헤더 영역 (인사말 + 뿌듯 카운트) -->
+        <div class="app-header">
+            <div class="greeting">오늘 하루도 뿌듯</div>
+            <div class="today-stats" id="todayStats">
+                <span class="ppudeut-label">뿌듯</span>
+                <span class="ppudeut-multiplier">×</span>
+                <span class="today-count" id="todayCount">0</span>
             </div>
         </div>
 
         <!-- 메인 콘텐츠 -->
         <div class="content-area">
             <!-- 입력 필드 -->
-            <div class="input-group">
-                <input 
-                    type="text" 
-                    id="todoInput" 
-                    placeholder="새 할 일을 입력하세요..." 
-                    class="todo-input" 
-                    autocomplete="off"
-                    aria-label="새 할 일 입력"
-                    maxlength="200"
-                >
-                <button 
-                    class="emoji-picker-btn" 
-                    id="emojiPickerBtn" 
-                    title="이모지 선택" 
-                    aria-label="이모지 선택"
-                    aria-expanded="false"
-                    aria-haspopup="true"
-                >😊</button>
+            <div class="input-wrapper">
+                <div class="input-container">
+                    <input type="text" id="todoInput" placeholder="오늘 뿌듯하게 해낼 일은?" class="todo-input" autocomplete="off"
+                        maxlength="200">
+                </div>
             </div>
 
-            <!-- 이모지 피커 -->
-            <div class="emoji-picker" id="emojiPicker" style="display: none;" role="dialog" aria-label="이모지 선택기">
-                <div class="emoji-grid" id="emojiGrid" role="group" aria-label="이모지 목록"></div>
+            <!-- 필터 및 검색 -->
+            <div class="filter-bar">
+                <div class="filter-chips">
+                    <button class="filter-chip active" data-filter="all">전체</button>
+                    <button class="filter-chip" data-filter="active">진행중</button>
+                    <button class="filter-chip" data-filter="completed">완료</button>
+                </div>
+                <button class="search-toggle-btn" id="searchToggleBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="search-bar-container" id="searchBar" style="display: none;">
+                <input type="text" id="searchInput" placeholder="검색..." class="search-input">
             </div>
 
             <!-- 할 일 목록 -->
-            <ul id="todoList" class="todo-list" role="list" aria-label="할 일 목록">
-                <!-- 항목들이 여기에 추가됩니다 -->
-            </ul>
+            <div class="todo-list-container">
+                <ul id="todoList" class="todo-list">
+                    <!-- 항목들이 여기에 추가됩니다 -->
+                </ul>
 
-            <!-- 빈 상태 -->
-            <div id="emptyState" class="empty-state" style="display: none;" role="status" aria-live="polite">
-                <div class="empty-icon" aria-hidden="true">✨</div>
-                <div class="empty-text" id="emptyText">할 일이 없습니다</div>
-                <div class="empty-hint" id="emptyHint">위 입력창에 새 할 일을 추가해보세요</div>
+                <!-- 빈 상태 -->
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <div class="empty-image-container">
+                        <!-- 이미지 생성 후 여기에 삽입 -->
+                        <div class="empty-placeholder-art">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="empty-text">할 일이 없네요!</div>
+                    <div class="empty-subtext">새로운 목표를 세워보세요</div>
+                </div>
             </div>
 
-            <!-- 상태바 -->
-            <div class="status-bar">
-                <span id="todoCount">0개 남음</span>
-                <div class="status-controls">
-                    <button id="alwaysOnTopBtn" class="control-btn active" title="항상 위">📌</button>
-                    <input type="range" id="opacitySlider" class="opacity-slider" min="0" max="100" value="100" title="투명도">
+            <!-- 하단 상태바 -->
+            <div class="bottom-bar">
+                <span id="todoCount" class="todo-count">0 tasks</span>
+                <div class="bottom-center">
+                    <button id="focusToggle" class="focus-toggle-btn" title="집중 모드 (항상 위)">
+                        <svg id="focusIconOff" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <path d="M7 12h10"/>
+                        </svg>
+                        <svg id="focusIconOn" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                            <rect x="3" y="3" width="18" height="18" rx="2" fill="currentColor"/>
+                            <path d="M7 12h10" stroke="white"/>
+                            <path d="M12 7v10" stroke="white"/>
+                        </svg>
+                    </button>
+                    <div class="focus-timer" id="focusTimer" style="display: none;">
+                        <svg class="focus-timer-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span class="focus-timer-time" id="focusTime">0분</span>
+                    </div>
                 </div>
-                <div class="status-right">
-                    <button id="rouletteBtn" class="status-btn" title="랜덤 선택">🎲</button>
-                    <button id="clearCompletedBtn" class="status-btn" style="display: none;">완료 항목 삭제</button>
+                <div class="bottom-actions">
+                <button id="rouletteBtn" class="action-icon-btn" title="랜덤 선택">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                </button>
+                <button id="clearCompletedBtn" class="action-icon-btn" title="완료 삭제">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
                 </div>
             </div>
         </div>
@@ -107,129 +145,72 @@
                 <h3>설정</h3>
                 <button class="close-settings" id="closeSettings">×</button>
             </div>
+
+            <div class="settings-tabs">
+                <button class="settings-tab active" data-tab="basic">디자인</button>
+                <button class="settings-tab" data-tab="stats">통계</button>
+                <button class="settings-tab" data-tab="data">데이터</button>
+            </div>
+
             <div class="settings-content">
-                <!-- 테마 선택 -->
-                <div class="settings-section">
-                    <label class="settings-label">테마 색상</label>
-                    <div class="theme-picker" id="themePicker">
-                        <button class="theme-btn active" data-theme="default" style="--theme-color: #007aff" title="기본"></button>
-                        <button class="theme-btn" data-theme="pink" style="--theme-color: #ff2d55" title="핑크"></button>
-                        <button class="theme-btn" data-theme="orange" style="--theme-color: #ff9500" title="오렌지"></button>
-                        <button class="theme-btn" data-theme="green" style="--theme-color: #34c759" title="그린"></button>
-                        <button class="theme-btn" data-theme="purple" style="--theme-color: #af52de" title="퍼플"></button>
-                        <button class="theme-btn" data-theme="mint" style="--theme-color: #00c7be" title="민트"></button>
-                    </div>
-                </div>
-                
-                <!-- 사운드 토글 -->
-                <div class="settings-section">
-                    <label class="settings-label">효과음</label>
-                    <div class="toggle-switch">
-                        <input type="checkbox" id="soundToggle" checked>
-                        <label for="soundToggle" class="toggle-label"></label>
-                    </div>
-                </div>
-
-                <!-- 알림 토글 -->
-                <div class="settings-section">
-                    <label class="settings-label">레벨업 알림</label>
-                    <div class="toggle-switch">
-                        <input type="checkbox" id="notificationToggle" checked>
-                        <label for="notificationToggle" class="toggle-label"></label>
-                    </div>
-                </div>
-
-                <!-- 통계 -->
-                <div class="settings-section stats-section">
-                    <label class="settings-label">내 통계</label>
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <span class="stat-value" id="statTotalCompleted">0</span>
-                            <span class="stat-label">완료한 할 일</span>
+                <!-- 기본 탭 -->
+                <div class="settings-tab-content active" id="basicTab">
+                    <div class="settings-section">
+                        <label class="settings-label">테마 포인트 컬러</label>
+                        <div class="theme-picker" id="themePicker">
+                            <button class="theme-btn active" data-theme="default"
+                                style="--theme-color: #ec4899"></button>
+                            <button class="theme-btn" data-theme="blue" style="--theme-color: #3b82f6"></button>
+                            <button class="theme-btn" data-theme="orange" style="--theme-color: #f97316"></button>
+                            <button class="theme-btn" data-theme="green" style="--theme-color: #22c55e"></button>
+                            <button class="theme-btn" data-theme="purple" style="--theme-color: #a855f7"></button>
                         </div>
-                        <div class="stat-item">
+                    </div>
+
+                    <div class="settings-section">
+                        <label class="settings-label">효과음</label>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="soundToggle" checked>
+                            <label for="soundToggle" class="toggle-label"></label>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <label class="settings-label">투명도</label>
+                        <input type="range" id="opacitySlider" class="opacity-slider" min="20" max="100" value="100">
+                    </div>
+                </div>
+
+                <!-- 통계 & 업적 탭 -->
+                <div class="settings-tab-content" id="statsTab" style="display: none;">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-value" id="statTotalCompleted">0</span>
+                            <span class="stat-label">총 완료</span>
+                        </div>
+                        <div class="stat-card">
                             <span class="stat-value" id="statMaxStreak">0</span>
                             <span class="stat-label">최대 스트릭</span>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-value" id="statTotalXP">0</span>
-                            <span class="stat-label">총 획득 XP</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-value" id="statAchievements">0</span>
-                            <span class="stat-label">업적</span>
-                        </div>
                     </div>
                 </div>
 
-                <!-- 업적 목록 -->
-                <div class="settings-section">
-                    <label class="settings-label">업적</label>
-                    <div class="achievements-list" id="achievementsList">
-                        <!-- 동적으로 추가됨 -->
-                    </div>
-                </div>
-
-                <!-- 데이터 관리 -->
-                <div class="settings-section">
-                    <label class="settings-label">데이터 관리</label>
-                    <div class="data-actions">
-                        <button class="primary-btn" id="exportBackupBtn" title="백업 파일 내보내기">💾 백업 내보내기</button>
-                        <button class="primary-btn" id="importBackupBtn" title="백업 파일 가져오기">📥 백업 가져오기</button>
+                <!-- 데이터 관리 탭 -->
+                <div class="settings-tab-content" id="dataTab" style="display: none;">
+                    <div class="settings-section">
+                        <button class="primary-btn full-width" id="exportBackupBtn">백업 저장</button>
+                        <button class="secondary-btn full-width" id="importBackupBtn" style="margin-top: 8px;">백업
+                            불러오기</button>
                         <input type="file" id="importBackupFile" accept=".json" style="display: none;">
-                        <button class="danger-btn" id="resetDataBtn">모든 데이터 초기화</button>
+                    </div>
+                    <div class="settings-section">
+                        <button class="danger-btn full-width" id="resetDataBtn">초기화</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 레벨업 모달 -->
-        <div class="level-up-modal" id="levelUpModal" style="display: none;">
-            <div class="level-up-content">
-                <div class="level-up-icon">🎉</div>
-                <div class="level-up-title">레벨 업!</div>
-                <div class="level-up-level" id="levelUpLevel">Lv.2</div>
-                <div class="level-up-message" id="levelUpMessage">축하합니다!</div>
-                <button class="level-up-close" id="levelUpClose">확인</button>
-            </div>
-        </div>
 
-        <!-- 업적 토스트 -->
-        <div class="achievement-toast" id="achievementToast" style="display: none;">
-            <div class="achievement-icon" id="achievementIcon">🏆</div>
-            <div class="achievement-info">
-                <div class="achievement-title">업적 달성!</div>
-                <div class="achievement-name" id="achievementName"></div>
-            </div>
-        </div>
-
-        <!-- 뽀모도로 타이머 모달 -->
-        <div class="pomodoro-modal" id="pomodoroModal" style="display: none;">
-            <div class="pomodoro-content">
-                <div class="pomodoro-header">
-                    <h3>🍅 뽀모도로 타이머</h3>
-                    <button class="close-pomodoro" id="closePomodoroBtn">×</button>
-                </div>
-                <div class="pomodoro-task" id="pomodoroTask">할 일 선택됨</div>
-                <div class="pomodoro-timer" id="pomodoroTimer">25:00</div>
-                <div class="pomodoro-progress">
-                    <div class="pomodoro-progress-bar" id="pomodoroProgressBar"></div>
-                </div>
-                <div class="pomodoro-controls">
-                    <button class="pomodoro-btn" id="pomodoroStartBtn">▶ 시작</button>
-                    <button class="pomodoro-btn" id="pomodoroPauseBtn" style="display: none;">⏸ 일시정지</button>
-                    <button class="pomodoro-btn secondary" id="pomodoroResetBtn">↺ 리셋</button>
-                </div>
-                <div class="pomodoro-presets">
-                    <button class="preset-btn active" data-minutes="25">25분</button>
-                    <button class="preset-btn" data-minutes="15">15분</button>
-                    <button class="preset-btn" data-minutes="5">5분</button>
-                    <button class="preset-btn" data-minutes="45">45분</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Confetti 캔버스 -->
         <canvas id="confettiCanvas"></canvas>
     </div>
 

@@ -9,7 +9,6 @@ import {
     deleteTodoById, 
     moveTodoById,
     updateTodoText,
-    togglePinById,
     clearCompleted,
     sortTodos,
     getActiveCount,
@@ -31,10 +30,9 @@ function runTests() {
     assert.strictEqual(todos[0].text, 'Task 1');
     assert.strictEqual(todos[0].completed, false);
     
-    todos = addTodoList(todos, 'Task 2', { emoji: '🎯' });
+    todos = addTodoList(todos, 'Task 2');
     assert.strictEqual(todos.length, 2);
     assert.strictEqual(todos[0].text, 'Task 2');
-    assert.strictEqual(todos[0].emoji, '🎯');
     
     // 빈 텍스트는 무시
     const beforeLength = todos.length;
@@ -67,12 +65,12 @@ function runTests() {
     todos = updateTodoText(todos, id2, 'Updated Task');
     assert.strictEqual(todos[0].text, 'Updated Task');
 
-    // 테스트 6: 핀 고정
-    console.log('✓ 테스트 6: 핀 고정/해제');
-    todos = togglePinById(todos, id2);
-    assert.strictEqual(todos[0].pinned, true);
-    todos = togglePinById(todos, id2);
-    assert.strictEqual(todos[0].pinned, false);
+    // 테스트 6: 할 일 추가 (기본 필드만)
+    console.log('✓ 테스트 6: 할 일 추가 (기본 필드)');
+    todos = addTodoList(todos, 'Task with defaults');
+    assert.strictEqual(todos[0].text, 'Task with defaults');
+    assert.strictEqual(todos[0].id !== undefined, true);
+    assert.strictEqual(todos[0].createdAt !== undefined, true);
 
     // 테스트 7: 완료된 항목 제거
     console.log('✓ 테스트 7: 완료된 항목 제거');
@@ -85,12 +83,10 @@ function runTests() {
     assert.strictEqual(todos.find(t => t.id === id3), undefined);
     assert.strictEqual(getActiveCount(todos), activeBefore);
 
-    // 테스트 8: 정렬 (고정 우선)
+    // 테스트 8: 정렬
     console.log('✓ 테스트 8: 할 일 정렬');
-    const id4 = todos[0].id;
-    todos = togglePinById(todos, id4);
-    todos = sortTodos(todos);
-    assert.strictEqual(todos[0].pinned, true);
+    const sortedTodos = sortTodos(todos);
+    assert.strictEqual(sortedTodos.length, todos.length); // 정렬해도 길이는 같음
 
     // 테스트 9: 카운트
     console.log('✓ 테스트 9: 활성/완료 카운트');
@@ -121,8 +117,9 @@ function runTests() {
 
     // 테스트 12: 나이 텍스트
     console.log('✓ 테스트 12: 할 일 나이 텍스트');
-    const ageText = getTodoAgeText(new Date().toISOString());
-    assert.strictEqual(ageText, '방금 전');
+    const ageInfo = getTodoAgeText(new Date().toISOString());
+    assert.strictEqual(ageInfo.text, '방금 추가!');
+    assert.strictEqual(ageInfo.level, 0);
 
     // 테스트 13: XP 계산
     console.log('✓ 테스트 13: XP 계산');

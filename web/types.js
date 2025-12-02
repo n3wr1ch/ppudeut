@@ -5,12 +5,10 @@
 
 /**
  * @typedef {Object} Todo
- * @property {number} id - 할 일 고유 ID
+ * @property {string} id - 할 일 고유 ID
  * @property {string} text - 할 일 내용
  * @property {boolean} completed - 완료 여부
  * @property {string} createdAt - 생성 시간 (ISO 8601)
- * @property {string|null} emoji - 이모지
- * @property {boolean} [pinned] - 고정 여부
  */
 
 /**
@@ -47,15 +45,6 @@
  * @property {string} desc - 업적 설명
  * @property {string} icon - 업적 아이콘 (이모지)
  * @property {function(Profile): boolean} condition - 업적 달성 조건 함수
- */
-
-/**
- * @typedef {Object} PomodoroState
- * @property {number|null} todoId - 연결된 할 일 ID
- * @property {number} duration - 타이머 지속 시간 (초)
- * @property {number} remaining - 남은 시간 (초)
- * @property {boolean} isRunning - 실행 중 여부
- * @property {number|null} intervalId - setInterval ID
  */
 
 /**
